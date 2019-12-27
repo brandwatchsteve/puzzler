@@ -6,20 +6,17 @@ use std::fmt;
 // }
 
 struct PairChar {
-    pair_char : u16,
+    pair_char: u16,
 }
 
 impl PairChar {
-    fn encode(char1 : u8, char2 : u8) -> PairChar {
+    fn encode(char1: u8, char2: u8) -> PairChar {
+        let val1: u16 = (char1 - b'a') as u16;
+        let val2: u16 = (char2 - b'a') as u16;
 
-        let val1 : u16 = (char1 - b'a') as u16;
-        let val2 : u16 = (char2 - b'a') as u16;
+        let pair_char: u16 = (26 * val1) + val2;
 
-        let pair_char : u16 = (26*val1) + val2;
-
-        PairChar {
-            pair_char
-        }
+        PairChar { pair_char }
     }
 
     fn decode(&self) -> String {
@@ -35,21 +32,19 @@ impl PairChar {
 }
 
 struct PairString {
-    pair_string : Vec<PairChar>,
+    pair_string: Vec<PairChar>,
 }
 
 impl PairString {
-    fn encode(input_string : &str) -> PairString {
-        let mut pair_string : Vec<PairChar> = Vec::new();
+    fn encode(input_string: &str) -> PairString {
+        let mut pair_string: Vec<PairChar> = Vec::new();
         for char_pair in input_string.as_bytes().chunks(2) {
             let char1 = char_pair[0];
             let char2 = char_pair[1];
             pair_string.push(PairChar::encode(char1, char2));
         }
 
-        PairString {
-            pair_string
-        }
+        PairString { pair_string }
     }
 
     fn decode(&self) -> String {
@@ -64,39 +59,37 @@ impl fmt::Display for PairString {
     }
 }
 
-
-
 pub struct WordStore {
     // word_store : Vec<Vec<String>>,
-    word_store : Vec<Vec<PairString>>,
+    word_store: Vec<Vec<PairString>>,
 }
 
 impl WordStore {
     pub fn new() -> WordStore {
         let size = 10;
         // vec! macro would be useful here!
-        let mut word_store : Vec<Vec<PairString>> = Vec::with_capacity(size);
+        let mut word_store: Vec<Vec<PairString>> = Vec::with_capacity(size);
         for _ in 0..size {
-            let new_store : Vec<PairString> = Vec::new();
+            let new_store: Vec<PairString> = Vec::new();
             word_store.push(new_store);
         }
-        WordStore {
-            word_store,
-        }
+        WordStore { word_store }
     }
 
-    pub fn add(&mut self, word : &str) {
-        let word_len : usize = word.len();
+    pub fn add(&mut self, word: &str) {
+        let word_len: usize = word.len();
 
         // exit if the word has an uneven size
-        if word_len % 2 == 1 { return };
+        if word_len % 2 == 1 {
+            return;
+        };
 
         let index_pt = (word_len / 2) - 1;
 
         // grow the word_store if required
         if index_pt >= self.word_store.len() {
             println!("Growing the wordstore");
-            self.word_store.resize_with(index_pt+1, || {Vec::new()});
+            self.word_store.resize_with(index_pt + 1, || Vec::new());
         }
 
         // insert the word into the word_store

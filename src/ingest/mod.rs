@@ -13,4 +13,3 @@ pub fn read_contents(src_file: &str) -> Vec<String> {
         .map(|x| x.to_string())
         .collect()
 }
-

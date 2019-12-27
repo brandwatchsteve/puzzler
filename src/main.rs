@@ -1,9 +1,8 @@
 // use std::fs::File;
 // use std::io::{BufRead, BufReader};
 
-use puzzler::wordstore::WordStore;
 use puzzler::ingest;
-
+use puzzler::wordstore::WordStore;
 
 fn main() {
     let mut word_store = WordStore::new();
