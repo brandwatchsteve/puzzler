@@ -1,7 +1,9 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-pub fn read_contents(src_file: &str) -> Vec<String> {
+// read words from a file, returning only those which are all-lowercase-ascii
+// and having an even number of characters
+pub fn read_even_words(src_file: &str) -> Vec<String> {
     let file = File::open(src_file).unwrap();
     let reader = BufReader::new(file);
 

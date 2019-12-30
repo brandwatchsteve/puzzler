@@ -5,34 +5,10 @@ use std::fmt;
 //     bigram: HashMap<String, Option<Box<BigramIndex>>>,
 // }
 
-struct PairChar {
-    pair_char: u16,
-}
+use super::PairChar;
 
-impl PairChar {
-    fn encode(char1: u8, char2: u8) -> PairChar {
-        let val1: u16 = (char1 - b'a') as u16;
-        let val2: u16 = (char2 - b'a') as u16;
-
-        let pair_char: u16 = (26 * val1) + val2;
-
-        PairChar { pair_char }
-    }
-
-    fn decode(&self) -> String {
-        let char1 = (self.pair_char / 26) as u8 + b'a';
-        let char2 = (self.pair_char % 26) as u8 + b'a';
-
-        let mut result = String::new();
-        result.push(char1 as char);
-        result.push(char2 as char);
-
-        result
-    }
-}
-
-struct PairString {
-    pair_string: Vec<PairChar>,
+pub struct PairString {
+    pub pair_string: Vec<PairChar>,
 }
 
 impl PairString {
@@ -50,6 +26,14 @@ impl PairString {
     fn decode(&self) -> String {
         self.pair_string.iter().map(|x| x.decode()).collect()
     }
+
+    pub fn len(&self) -> usize {
+        self.pair_string.len()
+    }
+
+    // fn raw(&self) -> &Vec<PairChar> {
+    //     &self.pair_string
+    // }
 }
 
 impl fmt::Display for PairString {
@@ -60,13 +44,12 @@ impl fmt::Display for PairString {
 }
 
 pub struct WordStore {
-    // word_store : Vec<Vec<String>>,
     word_store: Vec<Vec<PairString>>,
 }
 
 impl WordStore {
     pub fn new() -> WordStore {
-        let size = 10;
+        let size = 12;
         // vec! macro would be useful here!
         let mut word_store: Vec<Vec<PairString>> = Vec::with_capacity(size);
         for _ in 0..size {
@@ -89,11 +72,15 @@ impl WordStore {
         // grow the word_store if required
         if index_pt >= self.word_store.len() {
             println!("Growing the wordstore");
-            self.word_store.resize_with(index_pt + 1, || Vec::new());
+            self.word_store.resize_with(index_pt + 1, Vec::new);
         }
 
         // insert the word into the word_store
         self.word_store[index_pt].push(PairString::encode(word));
+    }
+
+    pub fn pairstring_words_by_length(&self, size: usize) -> &Vec<PairString> {
+        &self.word_store[size]
     }
 
     pub fn print(&self) {
