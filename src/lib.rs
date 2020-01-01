@@ -1,45 +1,31 @@
-// struct BigramIndex {
-//     bigram: HashMap<String, Option<Box<BigramIndex>>>,
-// }
-
 pub mod bigramindex;
 pub mod ingest;
-pub mod wordstore;
 pub mod puzzlegrid;
+pub mod types;
+pub mod wordstore;
 
-#[derive(Clone,Copy,Default,Debug)]
-pub struct PairChar {
-    pair_char: u16,
+
+pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
+    let mut word_store = wordstore::WordStore::new();
+
+    for word in ingest::read_even_words(source_file) {
+        word_store.add(&word);
+    }
+
+    word_store
 }
 
-impl PairChar {
-    pub fn new() -> PairChar {
-        let pair_char = std::u16::MAX;
+pub fn populate_grid(width: usize, height: usize, word_store: &wordstore::WordStore,
+                 _horizontal_index: &bigramindex::BigramIndex, _vertical_index: &bigramindex::BigramIndex)
+    -> Option<puzzlegrid::PuzzleGrid> {
+    // generate a mutable puzzlegrid, to hold the words
+    let mut puzzle_grid: puzzlegrid::PuzzleGrid = puzzlegrid::PuzzleGrid::new(width, height);
 
-        PairChar{ pair_char }
-    }
+    // Identify possible start words for a given size
+    let top_start_words: &types::WordList = word_store.pairstring_words_by_length(width);
+    let _left_start_words: &types::WordList = word_store.pairstring_words_by_length(height);
 
-    pub fn encode(char1: u8, char2: u8) -> PairChar {
-        let val1: u16 = (char1 - b'a') as u16;
-        let val2: u16 = (char2 - b'a') as u16;
+    puzzle_grid.insert_horizontal(0, &top_start_words[0]);
 
-        let pair_char: u16 = (26 * val1) + val2;
-
-        PairChar { pair_char }
-    }
-
-    pub fn decode(&self) -> String {
-        if self.pair_char >= (27*26) {
-            return "__".to_string();
-        }
-
-        let char1 = (self.pair_char / 26) as u8 + b'a';
-        let char2 = (self.pair_char % 26) as u8 + b'a';
-
-        let mut result = String::new();
-        result.push(char1 as char);
-        result.push(char2 as char);
-
-        result
-    }
+    Some(puzzle_grid)
 }

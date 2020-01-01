@@ -1,59 +1,16 @@
-use std::fmt;
-// use std::collections::HashMap;
-
-// struct BigramIndex {
-//     bigram: HashMap<String, Option<Box<BigramIndex>>>,
-// }
-
-use super::PairChar;
-
-pub struct PairString {
-    pub pair_string: Vec<PairChar>,
-}
-
-impl PairString {
-    fn encode(input_string: &str) -> PairString {
-        let mut pair_string: Vec<PairChar> = Vec::new();
-        for char_pair in input_string.as_bytes().chunks(2) {
-            let char1 = char_pair[0];
-            let char2 = char_pair[1];
-            pair_string.push(PairChar::encode(char1, char2));
-        }
-
-        PairString { pair_string }
-    }
-
-    fn decode(&self) -> String {
-        self.pair_string.iter().map(|x| x.decode()).collect()
-    }
-
-    pub fn len(&self) -> usize {
-        self.pair_string.len()
-    }
-
-    // fn raw(&self) -> &Vec<PairChar> {
-    //     &self.pair_string
-    // }
-}
-
-impl fmt::Display for PairString {
-    // convert the u16 into a pair of characters
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.decode())
-    }
-}
+use super::types::{PairString, WordList};
 
 pub struct WordStore {
-    word_store: Vec<Vec<PairString>>,
+    word_store: Vec<WordList>,
 }
 
 impl WordStore {
     pub fn new() -> WordStore {
         let size = 12;
         // vec! macro would be useful here!
-        let mut word_store: Vec<Vec<PairString>> = Vec::with_capacity(size);
+        let mut word_store: Vec<WordList> = Vec::with_capacity(size);
         for _ in 0..size {
-            let new_store: Vec<PairString> = Vec::new();
+            let new_store: WordList = Vec::new();
             word_store.push(new_store);
         }
         WordStore { word_store }
@@ -79,8 +36,8 @@ impl WordStore {
         self.word_store[index_pt].push(PairString::encode(word));
     }
 
-    pub fn pairstring_words_by_length(&self, size: usize) -> &Vec<PairString> {
-        &self.word_store[size]
+    pub fn pairstring_words_by_length(&self, size: usize) -> &WordList {
+        &self.word_store[size-1]
     }
 
     pub fn print(&self) {
