@@ -36,7 +36,7 @@ impl WordStore {
         self.word_store[index_pt].push(PairString::encode(word));
     }
 
-    pub fn pairstring_words_by_length(&self, size: usize) -> &WordList {
+    pub fn words_by_length(&self, size: usize) -> &WordList {
         &self.word_store[size-1]
     }
 

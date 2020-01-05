@@ -1,8 +1,8 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 // use std::ops::{Index, IndexMut};
 
-use super::types::{PairChar};
+use super::types::{PairChar, PairString};
 use super::wordstore::WordStore;
 
 pub struct BigramIndex {
@@ -38,8 +38,8 @@ impl BigramIndex {
     pub fn build(size: usize, word_store: &WordStore) -> BigramIndex {
         let mut root = BigramIndex::new();
 
-        for word in word_store.pairstring_words_by_length(size) {
-            BigramIndex::index_word(&mut root, word.slice_from(0));
+        for word in word_store.words_by_length(size) {
+            BigramIndex::index_word(&mut root, word.slice());
         }
 
         // return the populated index
@@ -64,20 +64,38 @@ impl BigramIndex {
         }
     }
 
+    fn next_possibles(node: &BigramIndex, pair_slice: &[PairChar]) -> Option<HashSet<PairChar>> {
+        let key_char = &pair_slice[0];
+
+        let last_char = pair_slice.len() == 1;
+
+        if let None = node.index[&key_char] {
+            // we've hit the end of the indexchain before we've run out of word
+            // meaning there are no subsequent next_possibles
+            return None;
+        }
+
+        let next_index_ref = node.index[&key_char].as_ref().unwrap().borrow();
+        if last_char {
+            // we've got to the end of our sequence
+            //
+            // extract the keys for that index
+            let mut next_keys : HashSet<PairChar> = HashSet::new();
+            for key in next_index_ref.index.keys() {
+                next_keys.insert(key.clone());
+            }
+            //
+            Some(next_keys)
+        } else {
+            // we've got more pair_slice to descend down...
+            let remaining_slice = &pair_slice[1..];
+            BigramIndex::next_possibles(&next_index_ref, remaining_slice)
+        }
+
+    }
+
+    fn next_candidate_word(node: &BigramIndex, word: &mut PairString, filters: &Vec<HashSet<PairChar>>) -> Option<()> {
+        Some(())
+    }
 }
-
-// impl Index<PairChar> for BigramIndex {
-//     type Output = BigramIndexInner;
-// 
-//     fn index(&self, key: PairChar) -> &Self::Output {
-//         // println!("Accessing {:?}-side of balance immutably", index);
-//         &self.index[&key].unwrap().index
-//     }
-// }
-
-// impl IndexMut<PairChar> for BigramIndex {
-//     fn index_mut(&mut self, index: PairChar) -> &mut Self::Output {
-//         &mut self.index
-//     }
-// }
 

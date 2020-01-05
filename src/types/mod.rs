@@ -38,11 +38,29 @@ impl PairChar {
     }
 }
 
+#[derive(Clone)]
 pub struct PairString {
     pub pair_string: Vec<PairChar>,
 }
 
 impl PairString {
+    pub fn new() -> PairString {
+        PairString {
+            pair_string: Vec::new(),
+        }
+    }
+
+    pub fn build(length: usize) -> PairString {
+        let pair_string: Vec<PairChar> = vec![PairChar::new(); length];
+        PairString {
+            pair_string,
+        }
+    }
+
+    pub fn push(&mut self, pair_char: PairChar) {
+        self.pair_string.push(pair_char);
+    }
+
     pub fn encode(input_string: &str) -> PairString {
         let mut pair_string: Vec<PairChar> = Vec::new();
         for char_pair in input_string.as_bytes().chunks(2) {
@@ -62,8 +80,12 @@ impl PairString {
         self.pair_string.len()
     }
 
-    pub fn slice_from(&self, pos: usize) -> &[PairChar] {
-        &self.pair_string[pos..]
+    pub fn slice(&self) -> &[PairChar] {
+        &self.pair_string[..]
+    }
+
+    pub fn slice_to(&self, pos: usize) -> &[PairChar] {
+        &self.pair_string[..pos]
     }
 }
 

@@ -4,8 +4,10 @@ use puzzler::bigramindex::BigramIndex;
 // use puzzler::puzzlegrid::PuzzleGrid;
 
 const SOURCE_FILE: &str = "/usr/share/dict/words";
-const PUZZLE_WIDTH: usize = 3;
-const PUZZLE_HEIGHT: usize = 4;
+const PUZZLE_WIDTH: usize = 4;
+const PUZZLE_HEIGHT: usize = 3;
+
+use std::{thread, time};
 
 fn main() {
     // collect all of the source words, and store by length
@@ -29,4 +31,6 @@ fn main() {
         Some(p) => p.print(),
         None    => { println!("No matches found for size {}x{}", PUZZLE_WIDTH, PUZZLE_HEIGHT); }
     }
+
+    thread::sleep(time::Duration::from_millis(5000));
 }
