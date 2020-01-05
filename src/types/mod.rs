@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::Index;
 
-#[derive(Clone,Copy,Default,Debug,Eq,Hash,PartialEq)]
+#[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
 pub struct PairChar {
     pair_char: u16,
 }
@@ -10,7 +10,7 @@ impl PairChar {
     pub fn new() -> PairChar {
         let pair_char = std::u16::MAX;
 
-        PairChar{ pair_char }
+        PairChar { pair_char }
     }
 
     pub fn encode(char1: u8, char2: u8) -> PairChar {
@@ -23,7 +23,7 @@ impl PairChar {
     }
 
     pub fn decode(&self) -> String {
-        if self.pair_char >= (27*26) {
+        if self.pair_char >= (27 * 26) {
             return "__".to_string();
         }
 
@@ -52,9 +52,7 @@ impl PairString {
 
     pub fn build(length: usize) -> PairString {
         let pair_string: Vec<PairChar> = vec![PairChar::new(); length];
-        PairString {
-            pair_string,
-        }
+        PairString { pair_string }
     }
 
     pub fn push(&mut self, pair_char: PairChar) {

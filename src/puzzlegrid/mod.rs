@@ -1,6 +1,6 @@
 use super::types::{PairChar, PairString};
 
-#[derive(Clone,Default,Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct PuzzleGrid {
     grid: Vec<Vec<PairChar>>,
 }
@@ -25,7 +25,11 @@ impl PuzzleGrid {
         }
 
         if word.len() != self.grid[pos].len() {
-            println!("Word too large: grid={} but word={}", self.grid[pos].len(), word.len());
+            println!(
+                "Word too large: grid={} but word={}",
+                self.grid[pos].len(),
+                word.len()
+            );
             return None;
         }
 
@@ -46,7 +50,11 @@ impl PuzzleGrid {
         }
 
         if word.len() != self.grid.len() {
-            println!("Word too long: grid={} word={}", self.grid.len(), word.len());
+            println!(
+                "Word too long: grid={} word={}",
+                self.grid.len(),
+                word.len()
+            );
             return None;
         }
 
@@ -67,5 +75,3 @@ impl PuzzleGrid {
         }
     }
 }
-
-

@@ -14,7 +14,7 @@ impl BigramIndex {
     pub fn new() -> BigramIndex {
         let index: BigramIndexInner = HashMap::new();
 
-        BigramIndex{ index }
+        BigramIndex { index }
     }
 
     fn add_leaf(&mut self, key: PairChar) {
@@ -28,7 +28,7 @@ impl BigramIndex {
             match leaf {
                 Some(l) => {
                     l.borrow().print(&word);
-                },
+                }
                 None => println!("{}", word),
             }
         }
@@ -51,7 +51,9 @@ impl BigramIndex {
 
         match pair_slice.len() {
             0 => panic!("Inserting empty string into the index"),
-            1 => {node.index.insert(*key_char, None); },
+            1 => {
+                node.index.insert(*key_char, None);
+            }
             _ => {
                 if !node.index.contains_key(key_char) {
                     node.add_leaf(*key_char);
@@ -59,7 +61,10 @@ impl BigramIndex {
 
                 // insert the rest of the pair_slice
                 let remaining_slice = &pair_slice[1..];
-                BigramIndex::index_word(&mut node.index[&key_char].as_ref().unwrap().borrow_mut(), remaining_slice);
+                BigramIndex::index_word(
+                    &mut node.index[&key_char].as_ref().unwrap().borrow_mut(),
+                    remaining_slice,
+                );
             }
         }
     }
@@ -80,7 +85,7 @@ impl BigramIndex {
             // we've got to the end of our sequence
             //
             // extract the keys for that index
-            let mut next_keys : HashSet<PairChar> = HashSet::new();
+            let mut next_keys: HashSet<PairChar> = HashSet::new();
             for key in next_index_ref.index.keys() {
                 next_keys.insert(key.clone());
             }
@@ -91,11 +96,13 @@ impl BigramIndex {
             let remaining_slice = &pair_slice[1..];
             BigramIndex::next_possibles(&next_index_ref, remaining_slice)
         }
-
     }
 
-    fn next_candidate_word(node: &BigramIndex, word: &mut PairString, filters: &Vec<HashSet<PairChar>>) -> Option<()> {
+    fn next_candidate_word(
+        node: &BigramIndex,
+        word: &mut PairString,
+        filters: &Vec<HashSet<PairChar>>,
+    ) -> Option<()> {
         Some(())
     }
 }
-

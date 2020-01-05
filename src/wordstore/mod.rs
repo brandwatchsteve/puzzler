@@ -37,7 +37,7 @@ impl WordStore {
     }
 
     pub fn words_by_length(&self, size: usize) -> &WordList {
-        &self.word_store[size-1]
+        &self.word_store[size - 1]
     }
 
     pub fn print(&self) {

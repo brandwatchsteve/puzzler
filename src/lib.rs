@@ -26,7 +26,7 @@ struct CandidateStems {
 impl CandidateStems {
     fn new(width: usize, length: usize) -> CandidateStems {
         CandidateStems {
-            stems: vec!(PairString::build(length); width),
+            stems: vec![PairString::build(length); width],
             next_layer: 0,
             width,
         }
@@ -35,14 +35,18 @@ impl CandidateStems {
     fn add_layer(&mut self, new_row: &PairString) {
         // check that the layer is correctly sized
         if new_row.len() != self.width {
-            panic!("Trying to insert too long a character: {} into {}", new_row.len(), self.width);
+            panic!(
+                "Trying to insert too long a character: {} into {}",
+                new_row.len(),
+                self.width
+            );
         }
 
         // overwrite the characters at this level
         for (column, pairchar) in new_row.pair_string.iter().enumerate() {
-            let mut new_string : PairString = PairString::new();
+            let mut new_string: PairString = PairString::new();
             // TODO: make sure this works with zero layer
-            let new_slice : &[PairChar] = self.stems[column].slice_to(self.next_layer);
+            let new_slice: &[PairChar] = self.stems[column].slice_to(self.next_layer);
             for new_char in new_slice {
                 new_string.push(new_char.clone());
             }
@@ -63,7 +67,7 @@ impl CandidateStems {
     fn get_next_row_words(&self, vertical_index: &bigramindex::BigramIndex) -> WordIterator {
         let mut wordlist = WordList::new();
 
-        // here's the heart of the 
+        // here's the heart of the
 
         WordIterator::new(wordlist)
     }
@@ -99,9 +103,13 @@ impl Iterator for WordIterator {
 }
 
 // TODO use a result instead of an option for the return wrapper
-pub fn populate_grid(width: usize, height: usize, word_store: &wordstore::WordStore,
-                 _horizontal_index: &bigramindex::BigramIndex, _vertical_index: &bigramindex::BigramIndex)
-    -> Option<puzzlegrid::PuzzleGrid> {
+pub fn populate_grid(
+    width: usize,
+    height: usize,
+    word_store: &wordstore::WordStore,
+    _horizontal_index: &bigramindex::BigramIndex,
+    _vertical_index: &bigramindex::BigramIndex,
+) -> Option<puzzlegrid::PuzzleGrid> {
     // generate a mutable puzzlegrid, to hold the words
     let mut puzzle_grid: puzzlegrid::PuzzleGrid = puzzlegrid::PuzzleGrid::new(width, height);
 

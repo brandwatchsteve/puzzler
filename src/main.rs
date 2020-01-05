@@ -19,17 +19,34 @@ fn main() {
 
     // build out the puzzle_grid, building a second index if necessary
     let puzzle_grid = match PUZZLE_WIDTH == PUZZLE_HEIGHT {
-        true  => puzzler::populate_grid(PUZZLE_WIDTH, PUZZLE_HEIGHT, &word_store, &horizontal_index, &horizontal_index),
+        true => puzzler::populate_grid(
+            PUZZLE_WIDTH,
+            PUZZLE_HEIGHT,
+            &word_store,
+            &horizontal_index,
+            &horizontal_index,
+        ),
         false => {
             let vertical_index: BigramIndex = BigramIndex::build(PUZZLE_HEIGHT, &word_store);
-            puzzler::populate_grid(PUZZLE_WIDTH, PUZZLE_HEIGHT, &word_store, &horizontal_index, &vertical_index)
+            puzzler::populate_grid(
+                PUZZLE_WIDTH,
+                PUZZLE_HEIGHT,
+                &word_store,
+                &horizontal_index,
+                &vertical_index,
+            )
         }
     };
 
     // print out the grid if successful
     match puzzle_grid {
         Some(p) => p.print(),
-        None    => { println!("No matches found for size {}x{}", PUZZLE_WIDTH, PUZZLE_HEIGHT); }
+        None => {
+            println!(
+                "No matches found for size {}x{}",
+                PUZZLE_WIDTH, PUZZLE_HEIGHT
+            );
+        }
     }
 
     thread::sleep(time::Duration::from_millis(5000));
