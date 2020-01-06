@@ -2,74 +2,74 @@ use super::types::{PairChar, PairString};
 
 #[derive(Clone, Default, Debug)]
 pub struct PuzzleGrid {
-    grid: Vec<Vec<PairChar>>,
+    columns: Vec<Vec<PairChar>>,
+    next_layer: usize,
+    width: usize,
+    depth: usize,
 }
 
 impl PuzzleGrid {
-    pub fn new(x: usize, y: usize) -> PuzzleGrid {
-        let mut grid: Vec<Vec<PairChar>> = Vec::new();
-
-        for _ in 0..y {
-            grid.push(vec![PairChar::new(); x]);
+    pub fn new(width: usize, depth: usize) -> PuzzleGrid {
+        PuzzleGrid {
+            // columns: vec![PairString::build(depth); width],
+            columns: vec![vec![PairChar::encode(b'u', b'u'); depth]; width],
+            next_layer: 0,
+            width,
+            depth,
         }
+    }
 
-        PuzzleGrid { grid }
+    pub fn is_complete(&self) -> bool {
+        self.next_layer > self.depth
     }
 
     // insert a word into the puzzlegrid
     // TODO: replace the Option with a Result
-    pub fn insert_horizontal(&mut self, pos: usize, word: &PairString) -> Option<()> {
-        if pos >= self.grid.len() {
-            println!("Position too large");
+    pub fn add_layer(&mut self, word: &PairString) -> Option<()> {
+        if self.next_layer >= self.depth {
+            println!("Depth too large");
             return None;
         }
 
-        if word.len() != self.grid[pos].len() {
-            println!(
-                "Word too large: grid={} but word={}",
-                self.grid[pos].len(),
-                word.len()
-            );
+        if word.len() != self.width {
+            println!("Word too long: columns={} word={}", self.width, word.len());
             return None;
         }
 
-        for i in 0..(self.grid[pos].len()) {
-            self.grid[pos][i] = word.pair_string[i];
-            println!("Setting [{}, {}] to {:?}", pos, i, word.pair_string[i]);
+        for i in 0..(self.columns.len()) {
+            self.columns[i][self.next_layer] = word.pair_string[i];
+            println!("Setting [{}, {}] to {:?}", i, self.next_layer, word.pair_string[i]);
         }
+
+        self.next_layer += 1;
 
         Some(())
     }
 
-    // insert a word into the puzzlegrid
-    // TODO: replace the Option with a Result
-    pub fn insert_vertical(&mut self, pos: usize, word: &PairString) -> Option<()> {
-        if pos >= self.grid[0].len() {
-            println!("Position too large");
-            return None;
+    pub fn remove_layer(&mut self) {
+        if self.next_layer > 0 {
+            self.next_layer -= 1;
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.next_layer = 0;
+    }
+
+    pub fn get_stems(&self) -> Vec<&[PairChar]> {
+        let mut return_val: Vec<&[PairChar]> = Vec::new();
+
+        for column in &self.columns {
+            return_val.push(&column[0..self.next_layer]);
         }
 
-        if word.len() != self.grid.len() {
-            println!(
-                "Word too long: grid={} word={}",
-                self.grid.len(),
-                word.len()
-            );
-            return None;
-        }
-
-        for i in 0..(self.grid.len()) {
-            self.grid[i][pos] = word.pair_string[i];
-            println!("Setting [{}, {}] to {:?}", i, pos, word.pair_string[i]);
-        }
-
-        Some(())
+        return_val
     }
 
     pub fn print(&self) {
-        for i in 0..(self.grid.len()) {
-            for j in 0..(self.grid[i].len()) {
-                print!("{} ", self.grid[i][j].decode());
+        for y in 0..(self.depth) {
+            for x in 0..(self.width) {
+                print!("{} ", self.columns[x][y].decode());
             }
             println!("");
         }

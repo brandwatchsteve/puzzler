@@ -5,7 +5,7 @@ use puzzler::bigramindex::BigramIndex;
 
 const SOURCE_FILE: &str = "/usr/share/dict/words";
 const PUZZLE_WIDTH: usize = 4;
-const PUZZLE_HEIGHT: usize = 3;
+const PUZZLE_HEIGHT: usize = 2;
 
 use std::{thread, time};
 
@@ -49,5 +49,6 @@ fn main() {
         }
     }
 
+    println!("Sleeping a while");
     thread::sleep(time::Duration::from_millis(5000));
 }

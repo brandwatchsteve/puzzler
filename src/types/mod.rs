@@ -13,6 +13,11 @@ impl PairChar {
         PairChar { pair_char }
     }
 
+    fn is_lowercase_ascii(test_char: u8) -> bool {
+        test_char >= b'a' && test_char <= b'z'
+    }
+
+    // handle non-ascii characters
     pub fn encode(char1: u8, char2: u8) -> PairChar {
         let val1: u16 = (char1 - b'a') as u16;
         let val2: u16 = (char2 - b'a') as u16;
@@ -38,7 +43,7 @@ impl PairChar {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct PairString {
     pub pair_string: Vec<PairChar>,
 }
@@ -84,6 +89,10 @@ impl PairString {
 
     pub fn slice_to(&self, pos: usize) -> &[PairChar] {
         &self.pair_string[..pos]
+    }
+
+    pub fn reverse(&mut self) -> () {
+        self.pair_string.reverse();
     }
 }
 
