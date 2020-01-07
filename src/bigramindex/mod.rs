@@ -35,7 +35,7 @@ impl BigramIndex {
         }
     }
 
-    // populate the index
+    // populate the index based on a series of pairwords
     pub fn build(size: usize, word_store: &WordStore) -> BigramIndex {
         let mut root = BigramIndex::new(0);
 
@@ -79,7 +79,6 @@ impl BigramIndex {
             let new_possibles = match BigramIndex::next_possibles(self, stem) {
                 Some(v) => v,
                 None => HashSet::new(),
-                // None    => HashSet::new::<PairChar>(),
             };
             possible_chars.push(new_possibles);
         }
@@ -87,6 +86,8 @@ impl BigramIndex {
         possible_chars
     }
 
+    // recursively descend the tree structure
+    // returning Some<HashSet> of keys if we can travel down the tree, None if we run out of tree
     fn next_possibles(node: &BigramIndex, stem: &[PairChar]) -> Option<HashSet<PairChar>> {
         // check to see that we haven't descended too far
         if node.depth >= stem.len() {
@@ -102,7 +103,6 @@ impl BigramIndex {
             return None;
         }
 
-        // let next_index_ref = node.index[&key_char].as_ref().unwrap().borrow();
         let next_index_ref = match node
             .index
             .get(&key_char)
@@ -111,21 +111,23 @@ impl BigramIndex {
                 None => { panic!("We've hit a none in the index at depth {}", node.depth); },
                 Some(v) => v.borrow(),
             };
+
         if is_last_char {
-            // we've got to the end of our sequence
-            //
-            // extract the keys for that index
-            let mut next_keys: HashSet<PairChar> = HashSet::new();
-            for key in next_index_ref.index.keys() {
-                next_keys.insert(key.clone());
-            }
-            //
-            Some(next_keys)
+            // return the keys in the last node as a HashSet
+            Some(next_index_ref.get_keys_as_hashset())
         } else {
             // we've got more stem to descend down...
             // let remaining_slice = &stem[1..];
             BigramIndex::next_possibles(&next_index_ref, stem)
         }
+    }
+
+    pub fn get_keys_as_hashset(&self) -> HashSet<PairChar> {
+        let mut key_set: HashSet<PairChar> = HashSet::new();
+        for key in self.index.keys() {
+            key_set.insert(key.clone());
+        }
+        key_set
     }
 
     pub fn get_candidate_words(
@@ -143,8 +145,9 @@ impl BigramIndex {
             }
         }
 
+        // descend the index tree with the set filters to find possible matches
         let reverse_words =
-            match BigramIndex::get_reversed_candidate_words(root_index_node, filters) {
+            match BigramIndex::get_reversed_candidate_words(root_index_node, filters, 0) {
                 Some(v) => v,
                 None => {
                     return None;
@@ -164,6 +167,7 @@ impl BigramIndex {
     fn get_reversed_candidate_words(
         index_node: &BigramIndex,
         filters: &Vec<HashSet<PairChar>>,
+        depth: usize,
     ) -> Option<Vec<PairString>> {
         // check that all of the filter sets have some characters at least,
         // return early if any are None
@@ -200,10 +204,10 @@ impl BigramIndex {
             for key_char in intersection {
                 let next_index_ref = index_node.index[&key_char].as_ref().unwrap().borrow();
                 let partial_words =
-                    match BigramIndex::get_reversed_candidate_words(&next_index_ref, filters) {
+                    match BigramIndex::get_reversed_candidate_words(&next_index_ref, filters, depth+1) {
                         Some(v) => v,
                         None => {
-                            return None;
+                            continue;
                         }
                     };
 
@@ -215,7 +219,11 @@ impl BigramIndex {
             }
         }
 
-        Some(reversed_words)
+        if reversed_words.len() > 0 {
+            Some(reversed_words)
+        } else {
+            None
+        }
     }
 
     fn pairchar_intersection(

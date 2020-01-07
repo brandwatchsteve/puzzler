@@ -9,6 +9,8 @@ pub mod wordstore;
 // use types::{PairChar, PairString, WordList};
 use bigramindex::BigramIndex;
 use puzzlegrid::PuzzleGrid;
+use types::{WordList};
+use wordstore::WordStore;
 
 pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
     let mut word_store = wordstore::WordStore::new();
@@ -49,6 +51,10 @@ impl Iterator for WordIterator {
     }
 }
 
+fn generate_top_words(width: usize, word_store: WordStore, index: &BigramIndex) -> WordList {
+    WordList::new()
+}
+
 // TODO use a result instead of an option for the return wrapper
 pub fn populate_grid(
     width: usize,
@@ -58,11 +64,10 @@ pub fn populate_grid(
     vertical_index: &bigramindex::BigramIndex,
 ) -> Option<puzzlegrid::PuzzleGrid> {
     // Identify possible start words for a given size
-    // let top_start_words: &types::WordList = word_store.words_by_length(width);
     let top_start_words: types::WordList = word_store.words_by_length(width).clone();
 
     // generate a mutable puzzlegrid, to hold the words
-    let mut puzzle_grid: puzzlegrid::PuzzleGrid = puzzlegrid::PuzzleGrid::new(width, height);
+    let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
     if populate_layer(
         &mut puzzle_grid,
         WordIterator::new(top_start_words),
@@ -72,22 +77,6 @@ pub fn populate_grid(
     ) {
         return Some(puzzle_grid);
     }
-    /*
-    for word in WordIterator::new(top_start_words) {
-        puzzle_grid.add_layer(&word);
-
-        let stems = puzzle_grid.get_stems();
-        let possibles = vertical_index.get_possibles(stems);
-        let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possibles);
-
-        if let Some(v) = candidate_words {
-            puzzle_grid.add_layer(&v[0]);
-            return Some(puzzle_grid);
-        }
-
-        puzzle_grid.remove_layer();
-    }
-    */
 
     None
 }
@@ -102,9 +91,7 @@ fn populate_layer(
     for word in word_list {
         puzzle_grid.add_layer(&word);
 
-        if depth > 0 {
-            println!("Testing layer {} with word {}", depth, word);
-        }
+        // println!("Testing layer {} with word {}", depth, word);
 
         if puzzle_grid.is_complete() {
             return true;
