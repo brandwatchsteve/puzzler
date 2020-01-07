@@ -20,7 +20,7 @@ impl PuzzleGrid {
     }
 
     pub fn is_complete(&self) -> bool {
-        self.next_layer > self.depth
+        self.next_layer >= self.depth
     }
 
     // insert a word into the puzzlegrid

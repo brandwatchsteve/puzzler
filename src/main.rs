@@ -1,39 +1,82 @@
 use puzzler;
 // use puzzler::wordstore::{WordStore, PairString};
 use puzzler::bigramindex::BigramIndex;
+use clap::{App, Arg};
 // use puzzler::puzzlegrid::PuzzleGrid;
 
-const SOURCE_FILE: &str = "/usr/share/dict/words";
-const PUZZLE_WIDTH: usize = 4;
-const PUZZLE_HEIGHT: usize = 2;
+// const SOURCE_FILE: &str = "/usr/share/dict/words";
+// const PUZZLE_WIDTH: usize = 3;
+// const PUZZLE_HEIGHT: usize = 5;
 
 use std::{thread, time};
 
+
 fn main() {
+    // parse commandline
+    let matches = App::new("Puzzler")
+        .version("0.1")
+        .arg(
+            Arg::with_name("debug")
+            .help("turn on debugging")
+            .short("d")
+            .multiple(true)
+            .long("debug"),
+            )
+        .arg(
+            Arg::with_name("dictionary")
+            .help("Dictionary file to read from")
+            .short("D")
+            .default_value("/usr/share/dict/words")
+            .long("dictionary"),
+            )
+        .arg(
+            Arg::with_name("width")
+            .help("grid width")
+            .required(true)
+            .index(1),
+            )
+        .arg(
+            Arg::with_name("depth")
+            .help("grid depth")
+            .required(true)
+            .index(2),
+            )
+        .get_matches();
+
+    let dictionary_file = matches.value_of("dictionary").unwrap();
+    let puzzle_width: usize = matches.value_of("width").unwrap().parse::<usize>().unwrap();
+    let puzzle_depth: usize = matches.value_of("depth").unwrap().parse::<usize>().unwrap();
+    let debug: bool = matches.is_present("debug");
+
     // collect all of the source words, and store by length
-    println!("Extracting Word List");
-    let word_store = puzzler::generate_wordstore(SOURCE_FILE);
+    println!("Extracting Word List from {}", dictionary_file);
+    let word_store = puzzler::generate_wordstore(dictionary_file);
 
     // generate two indices
     println!("Building Indices");
-    let horizontal_index: BigramIndex = BigramIndex::build(PUZZLE_WIDTH, &word_store);
-    // horizontal_index.print("");
+    let horizontal_index: BigramIndex = BigramIndex::build(puzzle_width, &word_store);
+    if debug {
+        horizontal_index.print("");
+    }
 
     // build out the puzzle_grid, building a second index if necessary
-    let puzzle_grid = match PUZZLE_WIDTH == PUZZLE_HEIGHT {
+    let puzzle_grid = match puzzle_width == puzzle_depth {
         true => puzzler::populate_grid(
-            PUZZLE_WIDTH,
-            PUZZLE_HEIGHT,
+            puzzle_width,
+            puzzle_depth,
             &word_store,
             &horizontal_index,
             &horizontal_index,
         ),
         false => {
-            let vertical_index: BigramIndex = BigramIndex::build(PUZZLE_HEIGHT, &word_store);
+            let vertical_index: BigramIndex = BigramIndex::build(puzzle_depth, &word_store);
+            if debug {
+                vertical_index.print("");
+            }
             println!("Populating grid");
             puzzler::populate_grid(
-                PUZZLE_WIDTH,
-                PUZZLE_HEIGHT,
+                puzzle_width,
+                puzzle_depth,
                 &word_store,
                 &horizontal_index,
                 &vertical_index,
@@ -47,11 +90,13 @@ fn main() {
         None => {
             println!(
                 "No matches found for size {}x{}",
-                PUZZLE_WIDTH, PUZZLE_HEIGHT
+                puzzle_width, puzzle_depth
             );
         }
     }
 
-    println!("Sleeping a while");
-    thread::sleep(time::Duration::from_millis(5000));
+    if debug {
+        println!("Sleeping a while");
+        thread::sleep(time::Duration::from_millis(5000));
+    }
 }

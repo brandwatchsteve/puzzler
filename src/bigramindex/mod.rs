@@ -35,7 +35,7 @@ impl BigramIndex {
         }
     }
 
-    // use a wordlist...
+    // populate the index
     pub fn build(size: usize, word_store: &WordStore) -> BigramIndex {
         let mut root = BigramIndex::new(0);
 
@@ -47,6 +47,7 @@ impl BigramIndex {
         root
     }
 
+    // recursive function to create the index tree, as used by build
     fn index_word(node: &mut BigramIndex, pair_slice: &[PairChar]) {
         let key_char = &pair_slice[0];
 
@@ -70,11 +71,12 @@ impl BigramIndex {
         }
     }
 
-    pub fn get_possibles(&self, pair_slices: Vec<&[PairChar]>) -> Vec<HashSet<PairChar>> {
+    // create a hashset containing all of the possible next characters for a given set of stems
+    pub fn get_possibles(&self, stems: Vec<&[PairChar]>) -> Vec<HashSet<PairChar>> {
         let mut possible_chars: Vec<HashSet<PairChar>> = Vec::new();
 
-        for slice in pair_slices {
-            let new_possibles = match BigramIndex::next_possibles(self, slice) {
+        for stem in stems {
+            let new_possibles = match BigramIndex::next_possibles(self, stem) {
                 Some(v) => v,
                 None => HashSet::new(),
                 // None    => HashSet::new::<PairChar>(),
@@ -85,10 +87,14 @@ impl BigramIndex {
         possible_chars
     }
 
-    fn next_possibles(node: &BigramIndex, pair_slice: &[PairChar]) -> Option<HashSet<PairChar>> {
-        let key_char = &pair_slice[0];
+    fn next_possibles(node: &BigramIndex, stem: &[PairChar]) -> Option<HashSet<PairChar>> {
+        // check to see that we haven't descended too far
+        if node.depth >= stem.len() {
+            panic!("we've got a slice of length {} at an index of depth {}", stem.len(), node.depth);
+        }
+        let key_char = &stem[node.depth];
 
-        let last_char = pair_slice.len() == 1;
+        let is_last_char = stem.len()-1 == node.depth;
 
         if let None = node.index.get(&key_char) {
             // we've hit the end of the indexchain before we've run out of word
@@ -102,10 +108,10 @@ impl BigramIndex {
             .get(&key_char)
             .expect("Key Not Found")
             .as_ref() {
-                None => { return None; },
+                None => { panic!("We've hit a none in the index at depth {}", node.depth); },
                 Some(v) => v.borrow(),
             };
-        if last_char {
+        if is_last_char {
             // we've got to the end of our sequence
             //
             // extract the keys for that index
@@ -116,9 +122,9 @@ impl BigramIndex {
             //
             Some(next_keys)
         } else {
-            // we've got more pair_slice to descend down...
-            let remaining_slice = &pair_slice[1..];
-            BigramIndex::next_possibles(&next_index_ref, remaining_slice)
+            // we've got more stem to descend down...
+            // let remaining_slice = &stem[1..];
+            BigramIndex::next_possibles(&next_index_ref, stem)
         }
     }
 

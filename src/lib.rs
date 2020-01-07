@@ -39,7 +39,7 @@ impl Iterator for WordIterator {
     type Item = types::PairString;
 
     fn next(&mut self) -> Option<types::PairString> {
-        if self.next > self.candidates.len() {
+        if self.next >= self.candidates.len() {
             None
         } else {
             let return_val = self.candidates[self.next].clone();
@@ -63,14 +63,16 @@ pub fn populate_grid(
 
     // generate a mutable puzzlegrid, to hold the words
     let mut puzzle_grid: puzzlegrid::PuzzleGrid = puzzlegrid::PuzzleGrid::new(width, height);
-    // if populate_layer(
-    //     &mut puzzle_grid,
-    //     WordIterator::new(top_start_words),
-    //     horizontal_index,
-    //     vertical_index,
-    // ) {
-    //     return Some(puzzle_grid);
-    // }
+    if populate_layer(
+        &mut puzzle_grid,
+        WordIterator::new(top_start_words),
+        0,
+        horizontal_index,
+        vertical_index,
+    ) {
+        return Some(puzzle_grid);
+    }
+    /*
     for word in WordIterator::new(top_start_words) {
         puzzle_grid.add_layer(&word);
 
@@ -85,6 +87,7 @@ pub fn populate_grid(
 
         puzzle_grid.remove_layer();
     }
+    */
 
     None
 }
@@ -92,11 +95,16 @@ pub fn populate_grid(
 fn populate_layer(
     puzzle_grid: &mut PuzzleGrid,
     word_list: WordIterator,
+    depth: usize,
     horizontal_index: &BigramIndex,
     vertical_index: &BigramIndex,
 ) -> bool {
     for word in word_list {
         puzzle_grid.add_layer(&word);
+
+        if depth > 0 {
+            println!("Testing layer {} with word {}", depth, word);
+        }
 
         if puzzle_grid.is_complete() {
             return true;
@@ -108,7 +116,7 @@ fn populate_layer(
 
         if let Some(v) = candidate_words {
             let word_iterator = WordIterator::new(v);
-            if populate_layer(puzzle_grid, word_iterator, horizontal_index, vertical_index) {
+            if populate_layer(puzzle_grid, word_iterator, depth+1, horizontal_index, vertical_index) {
                 return true;
             }
         };
