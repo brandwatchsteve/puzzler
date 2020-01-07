@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-// use std::ops::{Index, IndexMut};
 
 use super::types::{PairChar, PairString};
 use super::wordstore::WordStore;
@@ -39,7 +38,7 @@ impl BigramIndex {
     pub fn build(size: usize, word_store: &WordStore) -> BigramIndex {
         let mut root = BigramIndex::new(0);
 
-        for word in word_store.words_by_length(size) {
+        for word in word_store.permuted_words_by_length(size) {
             BigramIndex::index_word(&mut root, word.slice());
         }
 

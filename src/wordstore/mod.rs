@@ -40,6 +40,24 @@ impl WordStore {
         &self.word_store[size - 1]
     }
 
+    pub fn permuted_words_by_length(&self, pattern_size: usize) -> WordList {
+        let mut return_list = WordList::new();
+        let min_bound = if pattern_size % 2 == 0 {
+            pattern_size / 2
+        } else {
+            1 + pattern_size / 2
+        };
+        for word_size in min_bound..pattern_size {
+            let spaces = pattern_size - word_size;
+            for word in self.word_store[word_size-1].iter().cloned() {
+                for permutation in word.permute(spaces) {
+                    return_list.push(permutation);
+                }
+            }
+        }
+        return_list
+    }
+
     pub fn print(&self) {
         for (index, array) in self.word_store.iter().enumerate() {
             println!("{}", index);

@@ -59,7 +59,8 @@ fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIndex)
     let mut result_set = WordList::new();
     let first_character_set = index.get_keys_as_hashset();
 
-    'outer: for candidate_word in word_store.words_by_length(width).clone() {
+    // could possibly speed this up by permuting the words afterwards
+    'outer: for candidate_word in word_store.permuted_words_by_length(width).clone() {
         'inner: for pairchar in candidate_word.slice() {
             if !first_character_set.contains(pairchar) {
                 continue 'outer;
