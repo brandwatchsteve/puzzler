@@ -51,20 +51,37 @@ impl Iterator for WordIterator {
     }
 }
 
-fn generate_top_words(width: usize, word_store: WordStore, index: &BigramIndex) -> WordList {
-    WordList::new()
+fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIndex) -> WordList {
+    // not all words are valid on the top line, only those whose pairchars are all valid
+    // starting pairchars of other words,
+    // eg. there's no English word starting "ZZ" so we can immediately rule out bu-zz from the top row
+
+    let mut result_set = WordList::new();
+    let first_character_set = index.get_keys_as_hashset();
+
+    'outer: for candidate_word in word_store.words_by_length(width).clone() {
+        'inner: for pairchar in candidate_word.slice() {
+            if !first_character_set.contains(pairchar) {
+                continue 'outer;
+            }
+        }
+        result_set.push(candidate_word);
+    }
+
+    result_set
 }
 
 // TODO use a result instead of an option for the return wrapper
 pub fn populate_grid(
     width: usize,
     height: usize,
-    word_store: &wordstore::WordStore,
-    horizontal_index: &bigramindex::BigramIndex,
-    vertical_index: &bigramindex::BigramIndex,
-) -> Option<puzzlegrid::PuzzleGrid> {
+    word_store: &WordStore,
+    horizontal_index: &BigramIndex,
+    vertical_index: &BigramIndex,
+) -> Option<PuzzleGrid> {
     // Identify possible start words for a given size
-    let top_start_words: types::WordList = word_store.words_by_length(width).clone();
+    // let top_start_words: types::WordList = word_store.words_by_length(width).clone();
+    let top_start_words: WordList = generate_top_words(width, &word_store, vertical_index);
 
     // generate a mutable puzzlegrid, to hold the words
     let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
