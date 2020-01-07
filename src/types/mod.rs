@@ -43,7 +43,7 @@ impl PairChar {
     }
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct PairString {
     pub pair_string: Vec<PairChar>,
 }

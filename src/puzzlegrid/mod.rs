@@ -38,7 +38,7 @@ impl PuzzleGrid {
 
         for i in 0..(self.columns.len()) {
             self.columns[i][self.next_layer] = word.pair_string[i];
-            println!("Setting [{}, {}] to {:?}", i, self.next_layer, word.pair_string[i]);
+            // println!("Setting [{}, {}] to {:?}", i, self.next_layer, word.pair_string[i]);
         }
 
         self.next_layer += 1;

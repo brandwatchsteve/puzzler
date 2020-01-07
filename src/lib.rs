@@ -57,38 +57,34 @@ pub fn populate_grid(
     horizontal_index: &bigramindex::BigramIndex,
     vertical_index: &bigramindex::BigramIndex,
 ) -> Option<puzzlegrid::PuzzleGrid> {
-    // generate a mutable puzzlegrid, to hold the words
-    //
     // Identify possible start words for a given size
     // let top_start_words: &types::WordList = word_store.words_by_length(width);
     let top_start_words: types::WordList = word_store.words_by_length(width).clone();
 
+    // generate a mutable puzzlegrid, to hold the words
     let mut puzzle_grid: puzzlegrid::PuzzleGrid = puzzlegrid::PuzzleGrid::new(width, height);
+    // if populate_layer(
+    //     &mut puzzle_grid,
+    //     WordIterator::new(top_start_words),
+    //     horizontal_index,
+    //     vertical_index,
+    // ) {
+    //     return Some(puzzle_grid);
+    // }
     for word in WordIterator::new(top_start_words) {
-        puzzle_grid.reset();
-
         puzzle_grid.add_layer(&word);
 
         let stems = puzzle_grid.get_stems();
-
         let possibles = vertical_index.get_possibles(stems);
-
         let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possibles);
 
         if let Some(v) = candidate_words {
-            let word_iterator = WordIterator::new(v);
-            if populate_layer(&mut puzzle_grid, word_iterator, horizontal_index, vertical_index) {
-                return Some(puzzle_grid);
-            }
-        };
-    }
+            puzzle_grid.add_layer(&v[0]);
+            return Some(puzzle_grid);
+        }
 
-    // build a list of candidate words for the horizontal
-    //   - first row from the start words
-    //   - subsequent rows from the list of candidate characters in the vertical indices
-    //   - if no suitable word is found, pick the next word from the preceeding level, and continue
-    //   - proceed to next lowest level if candidate is found
-    //   - return grid if last layer is reached, otherwise return a failure
+        puzzle_grid.remove_layer();
+    }
 
     None
 }
@@ -98,7 +94,7 @@ fn populate_layer(
     word_list: WordIterator,
     horizontal_index: &BigramIndex,
     vertical_index: &BigramIndex,
-    ) -> bool {
+) -> bool {
     for word in word_list {
         puzzle_grid.add_layer(&word);
 
@@ -118,7 +114,7 @@ fn populate_layer(
         };
 
         puzzle_grid.remove_layer();
-    };
+    }
 
     false
 }

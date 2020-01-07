@@ -76,7 +76,7 @@ impl BigramIndex {
         for slice in pair_slices {
             let new_possibles = match BigramIndex::next_possibles(self, slice) {
                 Some(v) => v,
-                None    => HashSet::new(),
+                None => HashSet::new(),
                 // None    => HashSet::new::<PairChar>(),
             };
             possible_chars.push(new_possibles);
@@ -96,7 +96,15 @@ impl BigramIndex {
             return None;
         }
 
-        let next_index_ref = node.index[&key_char].as_ref().unwrap().borrow();
+        // let next_index_ref = node.index[&key_char].as_ref().unwrap().borrow();
+        let next_index_ref = match node
+            .index
+            .get(&key_char)
+            .expect("Key Not Found")
+            .as_ref() {
+                None => { return None; },
+                Some(v) => v.borrow(),
+            };
         if last_char {
             // we've got to the end of our sequence
             //
@@ -114,7 +122,10 @@ impl BigramIndex {
         }
     }
 
-    pub fn get_candidate_words(root_index_node: &BigramIndex, filters: &Vec<HashSet<PairChar>>) -> Option<Vec<PairString>> {
+    pub fn get_candidate_words(
+        root_index_node: &BigramIndex,
+        filters: &Vec<HashSet<PairChar>>,
+    ) -> Option<Vec<PairString>> {
         // extract the possible words derived from a BigramIndex and a set of filters for each
         // depth
 
@@ -126,10 +137,13 @@ impl BigramIndex {
             }
         }
 
-        let reverse_words = match BigramIndex::get_reversed_candidate_words(root_index_node, filters) {
-            Some(v) => v,
-            None => { return None; },
-        };
+        let reverse_words =
+            match BigramIndex::get_reversed_candidate_words(root_index_node, filters) {
+                Some(v) => v,
+                None => {
+                    return None;
+                }
+            };
 
         let mut forward_words: Vec<PairString> = Vec::new();
         for word in reverse_words {
@@ -141,16 +155,23 @@ impl BigramIndex {
         Some(forward_words)
     }
 
-    fn get_reversed_candidate_words(index_node: &BigramIndex, filters: &Vec<HashSet<PairChar>>) -> Option<Vec<PairString>> {
+    fn get_reversed_candidate_words(
+        index_node: &BigramIndex,
+        filters: &Vec<HashSet<PairChar>>,
+    ) -> Option<Vec<PairString>> {
         // check that all of the filter sets have some characters at least,
         // return early if any are None
         let filters_length = filters.len();
         if index_node.depth >= filters_length {
-            panic!("Filters length does not match horizontal index depth: {} vs {}", filters_length, index_node.depth);
+            panic!(
+                "Filters length does not match horizontal index depth: {} vs {}",
+                filters_length, index_node.depth
+            );
         }
 
         let mut reversed_words: Vec<PairString> = Vec::new();
-        let intersection = BigramIndex::pairchar_intersection(index_node, &filters[index_node.depth]);
+        let intersection =
+            BigramIndex::pairchar_intersection(index_node, &filters[index_node.depth]);
 
         if intersection.len() == 0 {
             // no available matches at this depth, meaning we've not got any matches for this
@@ -158,7 +179,7 @@ impl BigramIndex {
             return None;
         }
 
-        if index_node.depth == (filters_length-1) {
+        if index_node.depth == (filters_length - 1) {
             // we've hit the last node in the index
 
             for pairchar in intersection {
@@ -172,10 +193,13 @@ impl BigramIndex {
             // for pairchar in intersection {
             for key_char in intersection {
                 let next_index_ref = index_node.index[&key_char].as_ref().unwrap().borrow();
-                let partial_words = match BigramIndex::get_reversed_candidate_words(&next_index_ref, filters) {
-                    Some(v) => v,
-                    None => { return None; },
-                };
+                let partial_words =
+                    match BigramIndex::get_reversed_candidate_words(&next_index_ref, filters) {
+                        Some(v) => v,
+                        None => {
+                            return None;
+                        }
+                    };
 
                 for word in partial_words {
                     let mut new_word: PairString = word.clone();
@@ -188,7 +212,10 @@ impl BigramIndex {
         Some(reversed_words)
     }
 
-    fn pairchar_intersection(index_node: &BigramIndex, filter_set: &HashSet<PairChar>) -> Vec<PairChar> {
+    fn pairchar_intersection(
+        index_node: &BigramIndex,
+        filter_set: &HashSet<PairChar>,
+    ) -> Vec<PairChar> {
         // return a vec of PairChars which match both the index and the filter_set
         let mut return_set: Vec<PairChar> = Vec::new();
         for key in index_node.index.keys() {
@@ -200,5 +227,3 @@ impl BigramIndex {
         return_set
     }
 }
-
-

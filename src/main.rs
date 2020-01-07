@@ -11,11 +11,13 @@ use std::{thread, time};
 
 fn main() {
     // collect all of the source words, and store by length
+    println!("Extracting Word List");
     let word_store = puzzler::generate_wordstore(SOURCE_FILE);
 
     // generate two indices
+    println!("Building Indices");
     let horizontal_index: BigramIndex = BigramIndex::build(PUZZLE_WIDTH, &word_store);
-    horizontal_index.print("");
+    // horizontal_index.print("");
 
     // build out the puzzle_grid, building a second index if necessary
     let puzzle_grid = match PUZZLE_WIDTH == PUZZLE_HEIGHT {
@@ -28,6 +30,7 @@ fn main() {
         ),
         false => {
             let vertical_index: BigramIndex = BigramIndex::build(PUZZLE_HEIGHT, &word_store);
+            println!("Populating grid");
             puzzler::populate_grid(
                 PUZZLE_WIDTH,
                 PUZZLE_HEIGHT,
