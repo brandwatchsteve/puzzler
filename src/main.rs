@@ -26,6 +26,7 @@ fn main() {
             Arg::with_name("dictionary")
             .help("Dictionary file to read from")
             .short("D")
+            .takes_value(true)
             .default_value("/usr/share/dict/words")
             .long("dictionary"),
             )

@@ -9,8 +9,11 @@ pub mod wordstore;
 // use types::{PairChar, PairString, WordList};
 use bigramindex::BigramIndex;
 use puzzlegrid::PuzzleGrid;
-use types::{WordList};
+use types::{PairString, WordList};
 use wordstore::WordStore;
+
+// use rayon::prelude::*;
+use std::sync::{Arc, Mutex};
 
 pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
     let mut word_store = wordstore::WordStore::new();
@@ -84,50 +87,77 @@ pub fn populate_grid(
     // let top_start_words: types::WordList = word_store.words_by_length(width).clone();
     let top_start_words: WordList = generate_top_words(width, &word_store, vertical_index);
 
-    // generate a mutable puzzlegrid, to hold the words
-    let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
-    if populate_layer(
-        &mut puzzle_grid,
-        WordIterator::new(top_start_words),
-        0,
-        horizontal_index,
-        vertical_index,
-    ) {
-        return Some(puzzle_grid);
-    }
+    let complete = Arc::new(Mutex::new(false));
+    let puzzle_arc = Arc::new(Mutex::<Option<PuzzleGrid>>::new(None));
 
-    None
+    // let mut complete = false;
+    top_start_words.iter().for_each(|x| {
+        let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
+        let completion_ref = complete.clone();
+
+        // extract the mutex to see if we can exit
+        let has_completed = {
+            let complete_guard = completion_ref.lock().unwrap();
+            *complete_guard
+        };
+
+        if !has_completed {
+            let found_result = populate_layer(
+                &mut puzzle_grid,
+                &x,
+                0,
+                horizontal_index,
+                vertical_index,
+            );
+            if found_result {
+                // set the mutex so that we can leave early
+                let mut complete_guard = completion_ref.lock().unwrap();
+                *complete_guard = true;
+
+                // assign the found puzzlegrid into the puzzle_mutex
+                let puzzle_mutex = puzzle_arc.clone();
+                let mut puzzle_guard = puzzle_mutex.lock().unwrap();
+                *puzzle_guard = Some(puzzle_grid);
+            }
+        }
+    });
+
+
+    let puzzle_mutex = puzzle_arc.clone();
+    let mut puzzle_guard = puzzle_mutex.lock().unwrap();
+    (*puzzle_guard).take()
 }
 
 fn populate_layer(
     puzzle_grid: &mut PuzzleGrid,
-    word_list: WordIterator,
+    word: &PairString,
     depth: usize,
     horizontal_index: &BigramIndex,
     vertical_index: &BigramIndex,
 ) -> bool {
-    for word in word_list {
-        puzzle_grid.add_layer(&word);
+    puzzle_grid.add_layer(word);
 
-        // println!("Testing layer {} with word {}", depth, word);
+    // println!("Testing layer {} with word {}", depth, word);
 
-        if puzzle_grid.is_complete() {
-            return true;
-        };
+    if puzzle_grid.is_complete() {
+        return true;
+    };
 
-        let stems = puzzle_grid.get_stems();
-        let possibles = vertical_index.get_possibles(stems);
-        let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possibles);
+    let stems = puzzle_grid.get_stems();
+    let possibles = vertical_index.get_possibles(stems);
+    let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possibles);
 
-        if let Some(v) = candidate_words {
-            let word_iterator = WordIterator::new(v);
-            if populate_layer(puzzle_grid, word_iterator, depth+1, horizontal_index, vertical_index) {
+    if let Some(v) = candidate_words {
+        // check out the lower levels
+        let word_iterator = WordIterator::new(v);
+        for word in word_iterator {
+            if populate_layer(puzzle_grid, &word, depth+1, horizontal_index, vertical_index) {
                 return true;
             }
-        };
+        }
+    };
 
-        puzzle_grid.remove_layer();
-    }
+    puzzle_grid.remove_layer();
 
     false
 }
