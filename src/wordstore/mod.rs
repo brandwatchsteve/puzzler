@@ -36,17 +36,27 @@ impl WordStore {
         self.word_store[index_pt].push(PairString::encode(word));
     }
 
-    pub fn words_by_length(&self, size: usize) -> &WordList {
-        &self.word_store[size - 1]
+    pub fn words_by_length(&self, pattern_size: usize) -> &WordList {
+        &self.word_store[pattern_size - 1]
     }
 
-    pub fn permuted_words_by_length(&self, pattern_size: usize) -> WordList {
+    pub fn permuted_words_by_length(&self, pattern_size: usize, max_spaces: usize) -> WordList {
+        if max_spaces == 0 {
+            // no padding, so just return the raw words
+            return self.word_store[pattern_size - 1].clone();
+        }
+
         let mut return_list = WordList::new();
-        let min_bound = if pattern_size % 2 == 0 {
+        let mut min_bound = if pattern_size % 2 == 0 {
             pattern_size / 2
         } else {
             1 + pattern_size / 2
         };
+
+        if pattern_size - min_bound > max_spaces {
+            min_bound = pattern_size - max_spaces;
+        }
+
         for word_size in min_bound..pattern_size {
             let spaces = pattern_size - word_size;
             for word in self.word_store[word_size - 1].iter().cloned() {

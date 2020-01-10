@@ -1,7 +1,5 @@
 * tests
 * readme.md
-* ignore duplicate words
-* single-space option
-* no-spaces option
+* ignore duplicate verticals
 * replace contained primitives with traits
 * permutes in descent (vs. permutes in index)

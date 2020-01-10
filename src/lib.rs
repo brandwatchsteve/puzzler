@@ -23,7 +23,7 @@ pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
     word_store
 }
 
-pub fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIndex) -> WordList {
+pub fn generate_top_words(width: usize, word_store: &WordStore, max_spaces: usize, index: &BigramIndex) -> WordList {
     // not all words are valid on the top line, only those whose pairchars are all valid
     // starting pairchars of other words,
     // eg. there's no English word starting "ZZ" so we can immediately rule out bu-zz from the top row
@@ -32,7 +32,7 @@ pub fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIn
     let first_character_set = index.get_keys_as_hashset();
 
     // could possibly speed this up by permuting the words afterwards
-    'outer: for candidate_word in word_store.permuted_words_by_length(width).clone() {
+    'outer: for candidate_word in word_store.permuted_words_by_length(width, max_spaces).clone() {
         'inner: for pairchar in candidate_word.slice() {
             if !first_character_set.contains(pairchar) {
                 continue 'outer;
@@ -55,6 +55,7 @@ pub fn populate_grid(
     let continue_running = AtomicBool::new(true);
     let puzzle_arc = Arc::new(Mutex::<Option<PuzzleGrid>>::new(None));
 
+    // top_start_words.par_iter().for_each(|x| {
     top_start_words.par_iter().for_each(|x| {
         let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
 

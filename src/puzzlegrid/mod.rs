@@ -59,7 +59,13 @@ impl PuzzleGrid {
     pub fn get_rows(&self) -> Vec<Vec<PairChar>> {
         let mut rows: Vec<Vec<PairChar>> = vec![Vec::new(); self.next_layer];
         for column in &self.columns {
-            &column.iter().enumerate().for_each(|x| rows[x.0].push(*x.1));
+            // &column.iter().enumerate().for_each(|x| rows[x.0].push(*x.1));
+            for i in 0..self.next_layer {
+                let pairchar = column[i];
+                if !pairchar.is_spacer() {
+                    rows[i].push(pairchar);
+                }
+            }
         }
 
         rows
@@ -109,8 +115,9 @@ impl PuzzleGrid {
         };
 
         let column_stems = self.get_columns();
-        // let current_rows = self.get_rows();
-        let possible_pairchars = vertical_index.get_possible_pairchars(column_stems);
+        let current_rows = self.get_rows();
+
+        let possible_pairchars = vertical_index.get_possible_pairchars(column_stems, current_rows);
         let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possible_pairchars);
 
         // recurse down if we have candidate words to check

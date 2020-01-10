@@ -34,10 +34,10 @@ impl BigramIndex {
     }
 
     // populate the index based on a series of pairwords
-    pub fn build(size: usize, word_store: &WordStore) -> BigramIndex {
+    pub fn build(size: usize, word_store: &WordStore, max_spaces: usize) -> BigramIndex {
         let mut root = BigramIndex::new(0);
 
-        for word in word_store.permuted_words_by_length(size) {
+        for word in word_store.permuted_words_by_length(size, max_spaces) {
             BigramIndex::index_word(&mut root, word.slice());
         }
 
@@ -80,11 +80,12 @@ impl BigramIndex {
     }
 
     // create a hashset containing all of the possible next characters for a given set of stems
-    pub fn get_possible_pairchars(&self, stems: Vec<&[PairChar]>) -> Vec<HashSet<PairChar>> {
+    pub fn get_possible_pairchars(&self, stems: Vec<&[PairChar]>, exclusion_words: Vec<Vec<PairChar>>) -> Vec<HashSet<PairChar>> {
         let mut possible_chars: Vec<HashSet<PairChar>> = Vec::new();
 
         for stem in stems {
-            let new_possibles = match BigramIndex::next_possible_pairchars(self, stem) {
+            let exclusions = exclusion_words.clone();
+            let new_possibles = match BigramIndex::next_possible_pairchars(self, stem, exclusions) {
                 Some(v) => v,
                 None => HashSet::new(),
             };
@@ -96,7 +97,7 @@ impl BigramIndex {
 
     // recursively descend the tree structure
     // returning Some<HashSet> of keys if we can travel down the tree, None if we run out of tree
-    fn next_possible_pairchars(node: &BigramIndex, stem: &[PairChar]) -> Option<HashSet<PairChar>> {
+    fn next_possible_pairchars(node: &BigramIndex, stem: &[PairChar], exclusions: Vec<Vec<PairChar>>) -> Option<HashSet<PairChar>> {
         // check to see that we haven't descended too far
         if node.depth >= stem.len() {
             panic!(
@@ -106,8 +107,6 @@ impl BigramIndex {
             );
         }
         let key_char = &stem[node.depth];
-
-        let is_last_char = stem.len() - 1 == node.depth;
 
         if node.index.get(&key_char).is_none() {
             // we've hit the end of the indexchain before we've run out of word
@@ -122,14 +121,30 @@ impl BigramIndex {
             Some(v) => v,
         };
 
+        // trim the exclusion words, based on the key_char
+        let new_exclusions = prune_exclusion_words(&exclusions, &key_char);
+
+        let is_last_char = stem.len() - 1 == node.depth;
         if is_last_char {
             // return the keys in the last node as a HashSet
-            Some(next_index_ref.get_keys_as_hashset())
+            Some(next_index_ref.get_keys_as_hashset_with_exclusions(new_exclusions))
         } else {
             // we've got more stem to descend down...
-            // let remaining_slice = &stem[1..];
-            BigramIndex::next_possible_pairchars(&next_index_ref, stem)
+            BigramIndex::next_possible_pairchars(&next_index_ref, stem, new_exclusions)
         }
+    }
+
+    fn get_keys_as_hashset_with_exclusions(&self, exclusions: Vec<Vec<PairChar>>) -> HashSet<PairChar> {
+        let mut trimmed_set = self.get_keys_as_hashset();
+
+        // delete based on exclusion words here, but only if we're down to the last character
+        for pairchar_word in exclusions {
+            if pairchar_word.len() == 1 {
+                trimmed_set.remove(&pairchar_word[0]);
+            };
+        }
+
+        trimmed_set
     }
 
     pub fn get_keys_as_hashset(&self) -> HashSet<PairChar> {
@@ -253,4 +268,22 @@ impl BigramIndex {
 
         return_set
     }
+}
+
+fn prune_exclusion_words(exclusions: &Vec<Vec<PairChar>>, key: &PairChar) -> Vec<Vec<PairChar>> {
+    let mut new_exclusions = Vec::new();
+
+    if key.is_spacer() {
+        // don't prune down if the character is a spac
+        new_exclusions = exclusions.clone();
+    } else {
+        // otherwise trim back any matching words, and ignore the rest
+        for pairchar_word in exclusions {
+            if pairchar_word.len() > 1 && pairchar_word[0] == *key {
+                new_exclusions.push(pairchar_word[1..].to_vec());
+            }
+        }
+    }
+
+    new_exclusions
 }

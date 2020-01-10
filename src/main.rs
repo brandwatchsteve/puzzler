@@ -22,22 +22,31 @@ fn main() {
                 .long("dictionary"),
         )
         .arg(
+            Arg::with_name("maxspaces")
+                .help("Have at most this number of spaces per line")
+                .short("s")
+                .takes_value(true)
+                .default_value("512")
+                .long("maxspaces"),
+        )
+        .arg(
             Arg::with_name("width")
                 .help("grid width")
-                .required(true)
-                .index(1),
+                // .index(1)
+                .required(true),
         )
         .arg(
             Arg::with_name("depth")
                 .help("grid depth")
-                .required(true)
-                .index(2),
+                // .index(2)
+                .required(true),
         )
         .get_matches();
 
     let dictionary_file = matches.value_of("dictionary").unwrap();
     let puzzle_width: usize = matches.value_of("width").unwrap().parse::<usize>().unwrap();
     let puzzle_depth: usize = matches.value_of("depth").unwrap().parse::<usize>().unwrap();
+    let max_spaces: usize = matches.value_of("maxspaces").unwrap().parse::<usize>().unwrap();
     let debug: bool = matches.is_present("debug");
 
     // collect all of the source words, and store by length
@@ -46,7 +55,7 @@ fn main() {
 
     // generate two indices
     println!("Building Indices");
-    let horizontal_index: BigramIndex = BigramIndex::build(puzzle_width, &word_store);
+    let horizontal_index: BigramIndex = BigramIndex::build(puzzle_width, &word_store, max_spaces);
     if debug {
         horizontal_index.print("");
     }
@@ -56,7 +65,7 @@ fn main() {
         // allocate an empty instance just to simplify code flow
         BigramIndex::new(0)
     } else {
-        BigramIndex::build(puzzle_depth, &word_store)
+        BigramIndex::build(puzzle_depth, &word_store, max_spaces)
     };
     let vertical_index_ref = if puzzle_width == puzzle_depth {
         &horizontal_index
@@ -66,7 +75,7 @@ fn main() {
 
     // build the start words
     println!("Building Top Layer Candidates");
-    let top_start_words = puzzler::generate_top_words(puzzle_width, &word_store, vertical_index_ref);
+    let top_start_words = puzzler::generate_top_words(puzzle_width, &word_store, max_spaces, vertical_index_ref);
 
     // build out the puzzle_grid, building a second index if necessary
     println!("Populating the puzzle grid");
