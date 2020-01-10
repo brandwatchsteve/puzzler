@@ -1,5 +1,5 @@
-use std::fmt;
 use std::collections::HashSet;
+use std::fmt;
 use std::ops::Index;
 
 #[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
@@ -24,13 +24,12 @@ impl PairChar {
         } else {
             panic!("Tried to encode a non-ascii character: {}", test_char);
         }
-
     }
 
     // handle non-ascii characters
     pub fn encode(char1: u8, char2: u8) -> PairChar {
         if char1 == b'_' && char2 == b'_' {
-            PairChar { pair_char: 27*27 }
+            PairChar { pair_char: 27 * 27 }
         } else {
             let val1: u16 = PairChar::single_char_convert(char1);
             let val2: u16 = PairChar::single_char_convert(char2);
@@ -108,8 +107,8 @@ impl PairString {
             return_vec.push(word)
         } else {
             // get the vector of words from the next lower depth
-            for permuted_word in PairString::permutation_recursor(word, space_count, depth+1) {
-                for i in 0..(permuted_word.len() + 1) {
+            for permuted_word in PairString::permutation_recursor(word, space_count, depth + 1) {
+                for i in 0..=permuted_word.len() {
                     let mut new_word = permuted_word.clone();
                     new_word.pair_string.insert(i, PairChar::encode(b'_', b'_'));
                     return_vec.push(new_word);
@@ -139,7 +138,7 @@ impl PairString {
         return_val
     }
 
-    pub fn reverse(&mut self) -> () {
+    pub fn reverse(&mut self) {
         self.pair_string.reverse();
     }
 }

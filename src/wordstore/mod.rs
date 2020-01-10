@@ -49,7 +49,7 @@ impl WordStore {
         };
         for word_size in min_bound..pattern_size {
             let spaces = pattern_size - word_size;
-            for word in self.word_store[word_size-1].iter().cloned() {
+            for word in self.word_store[word_size - 1].iter().cloned() {
                 for permutation in word.permute(spaces) {
                     return_list.push(permutation);
                 }

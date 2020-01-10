@@ -4,15 +4,13 @@ pub mod puzzlegrid;
 pub mod types;
 pub mod wordstore;
 
-// const FIRST_VAL: usize = 2;
-
-// use types::{PairChar, PairString, WordList};
 use bigramindex::BigramIndex;
 use puzzlegrid::PuzzleGrid;
 use types::{PairString, WordList};
 use wordstore::WordStore;
 
 use rayon::prelude::*;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
 pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
@@ -84,35 +82,25 @@ pub fn populate_grid(
     vertical_index: &BigramIndex,
 ) -> Option<PuzzleGrid> {
     // Identify possible start words for a given size
-    // let top_start_words: types::WordList = word_store.words_by_length(width).clone();
     let top_start_words: WordList = generate_top_words(width, &word_store, vertical_index);
 
-    let complete = Arc::new(Mutex::new(false));
+    let continue_running = AtomicBool::new(true);
     let puzzle_arc = Arc::new(Mutex::<Option<PuzzleGrid>>::new(None));
 
-    // let mut complete = false;
     top_start_words.par_iter().for_each(|x| {
         let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
-        let completion_ref = complete.clone();
 
-        // extract the mutex to see if we can exit
-        let has_completed = {
-            let complete_guard = completion_ref.lock().unwrap();
-            *complete_guard
-        };
-
-        if !has_completed {
+        if continue_running.load(Ordering::Relaxed) {
             let found_result = populate_layer(
                 &mut puzzle_grid,
                 &x,
                 0,
                 horizontal_index,
                 vertical_index,
+                Some(&continue_running),
             );
             if found_result {
-                // set the mutex so that we can leave early
-                let mut complete_guard = completion_ref.lock().unwrap();
-                *complete_guard = true;
+                continue_running.store(false, Ordering::Relaxed);
 
                 // assign the found puzzlegrid into the puzzle_mutex
                 let puzzle_mutex = puzzle_arc.clone();
@@ -121,7 +109,6 @@ pub fn populate_grid(
             }
         }
     });
-
 
     let puzzle_mutex = puzzle_arc.clone();
     let mut puzzle_guard = puzzle_mutex.lock().unwrap();
@@ -134,10 +121,17 @@ fn populate_layer(
     depth: usize,
     horizontal_index: &BigramIndex,
     vertical_index: &BigramIndex,
+    continue_running: Option<&AtomicBool>,
 ) -> bool {
-    puzzle_grid.add_layer(word);
+    // check whether to continue loop on the two highest levels
+    if depth <= 1
+        && continue_running.is_some()
+        && !continue_running.unwrap().load(Ordering::Relaxed)
+    {
+        return false;
+    }
 
-    // println!("Testing layer {} with word {}", depth, word);
+    puzzle_grid.add_layer(word);
 
     if puzzle_grid.is_complete() {
         return true;
@@ -151,7 +145,14 @@ fn populate_layer(
         // check out the lower levels
         let word_iterator = WordIterator::new(v);
         for word in word_iterator {
-            if populate_layer(puzzle_grid, &word, depth+1, horizontal_index, vertical_index) {
+            if populate_layer(
+                puzzle_grid,
+                &word,
+                depth + 1,
+                horizontal_index,
+                vertical_index,
+                continue_running,
+            ) {
                 return true;
             }
         }

@@ -64,12 +64,15 @@ impl BigramIndex {
 
                 // unbox the index to add to it, in order to avoid interior mutability woes
                 // TODO: Find a way to use the mutable ref from get_mut directly...
-                let mut child_node: BigramIndex = *(node.index.get_mut(&key_char).unwrap().take().unwrap());
+                let mut child_node: BigramIndex =
+                    *(node.index.get_mut(&key_char).unwrap().take().unwrap());
 
-                BigramIndex::index_word(
-                    &mut child_node,
-                    remaining_slice,
-                );
+                BigramIndex::index_word(&mut child_node, remaining_slice);
+
+                // compact the index
+                // TODO: Check that this is actually worth doing
+                child_node.index.shrink_to_fit();
+
                 // reinsert the modified child
                 node.index.insert(*key_char, Some(Box::new(child_node)));
             }
@@ -96,26 +99,28 @@ impl BigramIndex {
     fn next_possibles(node: &BigramIndex, stem: &[PairChar]) -> Option<HashSet<PairChar>> {
         // check to see that we haven't descended too far
         if node.depth >= stem.len() {
-            panic!("we've got a slice of length {} at an index of depth {}", stem.len(), node.depth);
+            panic!(
+                "we've got a slice of length {} at an index of depth {}",
+                stem.len(),
+                node.depth
+            );
         }
         let key_char = &stem[node.depth];
 
-        let is_last_char = stem.len()-1 == node.depth;
+        let is_last_char = stem.len() - 1 == node.depth;
 
-        if let None = node.index.get(&key_char) {
+        if node.index.get(&key_char).is_none() {
             // we've hit the end of the indexchain before we've run out of word
             // meaning there are no subsequent next_possibles
             return None;
         }
 
-        let next_index_ref = match node
-            .index
-            .get(&key_char)
-            .expect("Key Not Found")
-            .as_ref() {
-                None => { panic!("We've hit a none in the index at depth {}", node.depth); },
-                Some(v) => v,
-            };
+        let next_index_ref = match node.index.get(&key_char).expect("Key Not Found").as_ref() {
+            None => {
+                panic!("We've hit a none in the index at depth {}", node.depth);
+            }
+            Some(v) => v,
+        };
 
         if is_last_char {
             // return the keys in the last node as a HashSet
@@ -137,7 +142,7 @@ impl BigramIndex {
 
     pub fn get_candidate_words(
         root_index_node: &BigramIndex,
-        filters: &Vec<HashSet<PairChar>>,
+        filters: &[HashSet<PairChar>],
     ) -> Option<Vec<PairString>> {
         // extract the possible words derived from a BigramIndex and a set of filters for each
         // depth
@@ -145,7 +150,7 @@ impl BigramIndex {
         // first make sure that all of our filters can match something, immediately return None
         // otherwise
         for filter in filters {
-            if filter.len() == 0 {
+            if filter.is_empty() {
                 return None;
             }
         }
@@ -171,7 +176,7 @@ impl BigramIndex {
 
     fn get_reversed_candidate_words(
         index_node: &BigramIndex,
-        filters: &Vec<HashSet<PairChar>>,
+        filters: &[HashSet<PairChar>],
         depth: usize,
     ) -> Option<Vec<PairString>> {
         // check that all of the filter sets have some characters at least,
@@ -188,7 +193,7 @@ impl BigramIndex {
         let intersection =
             BigramIndex::pairchar_intersection(index_node, &filters[index_node.depth]);
 
-        if intersection.len() == 0 {
+        if intersection.is_empty() {
             // no available matches at this depth, meaning we've not got any matches for this
             // branch
             return None;
@@ -208,13 +213,16 @@ impl BigramIndex {
             // for pairchar in intersection {
             for key_char in intersection {
                 let next_index_ref = index_node.index[&key_char].as_ref().unwrap();
-                let partial_words =
-                    match BigramIndex::get_reversed_candidate_words(&next_index_ref, filters, depth+1) {
-                        Some(v) => v,
-                        None => {
-                            continue;
-                        }
-                    };
+                let partial_words = match BigramIndex::get_reversed_candidate_words(
+                    &next_index_ref,
+                    filters,
+                    depth + 1,
+                ) {
+                    Some(v) => v,
+                    None => {
+                        continue;
+                    }
+                };
 
                 for word in partial_words {
                     let mut new_word: PairString = word.clone();
@@ -224,7 +232,7 @@ impl BigramIndex {
             }
         }
 
-        if reversed_words.len() > 0 {
+        if !reversed_words.is_empty() {
             Some(reversed_words)
         } else {
             None

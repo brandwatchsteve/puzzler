@@ -71,7 +71,7 @@ impl PuzzleGrid {
             for x in 0..(self.width) {
                 print!("{} ", self.columns[x][y].decode());
             }
-            println!("");
+            println!();
         }
     }
 }

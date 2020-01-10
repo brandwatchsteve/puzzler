@@ -1,8 +1,7 @@
 * tests
 * readme.md
-* permutes in descent (vs. permutes in index)
-* add mutex to outer loop
-* parallelize the outer loop
-    * remove the refcells from the index creation
+* ignore duplicate words
+* single-space option
+* no-spaces option
 * replace contained primitives with traits
-* clippy
+* permutes in descent (vs. permutes in index)
