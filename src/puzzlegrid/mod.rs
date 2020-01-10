@@ -1,4 +1,6 @@
-use super::types::{PairChar, PairString};
+use super::types::{PairChar, PairString, WordIterator};
+use super::bigramindex::{BigramIndex};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Clone, Default, Debug)]
 pub struct PuzzleGrid {
@@ -11,7 +13,6 @@ pub struct PuzzleGrid {
 impl PuzzleGrid {
     pub fn new(width: usize, depth: usize) -> PuzzleGrid {
         PuzzleGrid {
-            // columns: vec![PairString::build(depth); width],
             columns: vec![vec![PairChar::encode(b'u', b'u'); depth]; width],
             next_layer: 0,
             width,
@@ -38,7 +39,6 @@ impl PuzzleGrid {
 
         for i in 0..(self.columns.len()) {
             self.columns[i][self.next_layer] = word.pair_string[i];
-            // println!("Setting [{}, {}] to {:?}", i, self.next_layer, word.pair_string[i]);
         }
 
         self.next_layer += 1;
@@ -56,7 +56,16 @@ impl PuzzleGrid {
         self.next_layer = 0;
     }
 
-    pub fn get_stems(&self) -> Vec<&[PairChar]> {
+    pub fn get_rows(&self) -> Vec<Vec<PairChar>> {
+        let mut rows: Vec<Vec<PairChar>> = vec![Vec::new(); self.next_layer];
+        for column in &self.columns {
+            &column.iter().enumerate().for_each(|x| rows[x.0].push(*x.1));
+        }
+
+        rows
+    }
+
+    pub fn get_columns(&self) -> Vec<&[PairChar]> {
         let mut return_val: Vec<&[PairChar]> = Vec::new();
 
         for column in &self.columns {
@@ -73,5 +82,55 @@ impl PuzzleGrid {
             }
             println!();
         }
+    }
+
+    // recursion function for populate_grid
+    pub fn populate_layer(
+        &mut self,
+        word: &PairString,
+        depth: usize,
+        horizontal_index: &BigramIndex,
+        vertical_index: &BigramIndex,
+        continue_running: Option<&AtomicBool>,
+    ) -> bool {
+        // check whether to continue loop (only bother for the two highest levels)
+        if depth <= 1
+            && continue_running.is_some()
+            && !continue_running.unwrap().load(Ordering::Relaxed)
+        {
+            return false;
+        }
+
+        self.add_layer(word);
+
+        if self.is_complete() {
+            // this true should propagate up through the call stack, and complete the run
+            return true;
+        };
+
+        let column_stems = self.get_columns();
+        // let current_rows = self.get_rows();
+        let possible_pairchars = vertical_index.get_possible_pairchars(column_stems);
+        let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possible_pairchars);
+
+        // recurse down if we have candidate words to check
+        if let Some(v) = candidate_words {
+            let word_iterator = WordIterator::new(v);
+            for word in word_iterator {
+                if self.populate_layer(
+                    &word,
+                    depth + 1,
+                    horizontal_index,
+                    vertical_index,
+                    continue_running,
+                ) {
+                    return true;
+                }
+            }
+        };
+
+        self.remove_layer();
+
+        false
     }
 }

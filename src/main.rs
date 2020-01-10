@@ -51,32 +51,36 @@ fn main() {
         horizontal_index.print("");
     }
 
-    // build out the puzzle_grid, building a second index if necessary
-    let puzzle_grid = if puzzle_width == puzzle_depth {
-        puzzler::populate_grid(
-            puzzle_width,
-            puzzle_depth,
-            &word_store,
-            &horizontal_index,
-            &horizontal_index,
-        )
+    // only generate a real vertical index if the grid is not square
+    let vertical_index = if puzzle_width == puzzle_depth {
+        // allocate an empty instance just to simplify code flow
+        BigramIndex::new(0)
     } else {
-        let vertical_index: BigramIndex = BigramIndex::build(puzzle_depth, &word_store);
-        if debug {
-            vertical_index.print("");
-        }
-        println!("Populating grid");
-        puzzler::populate_grid(
-            puzzle_width,
-            puzzle_depth,
-            &word_store,
-            &horizontal_index,
-            &vertical_index,
-        )
+        BigramIndex::build(puzzle_depth, &word_store)
     };
+    let vertical_index_ref = if puzzle_width == puzzle_depth {
+        &horizontal_index
+    } else {
+        &vertical_index
+    };
+
+    // build the start words
+    println!("Building Top Layer Candidates");
+    let top_start_words = puzzler::generate_top_words(puzzle_width, &word_store, vertical_index_ref);
+
+    // build out the puzzle_grid, building a second index if necessary
+    println!("Populating the puzzle grid");
+    let puzzle_grid = puzzler::populate_grid(
+        puzzle_width,
+        puzzle_depth,
+        &top_start_words,
+        &horizontal_index,
+        vertical_index_ref,
+    );
 
     // print out the grid if successful
     match puzzle_grid {
+        // Some(p) => {p.print(); println!("{:?}",p.get_rows());},
         Some(p) => p.print(),
         None => {
             println!(

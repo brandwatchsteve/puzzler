@@ -6,7 +6,7 @@ pub mod wordstore;
 
 use bigramindex::BigramIndex;
 use puzzlegrid::PuzzleGrid;
-use types::{PairString, WordList, WordIterator};
+use types::WordList;
 use wordstore::WordStore;
 
 use rayon::prelude::*;
@@ -23,7 +23,7 @@ pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
     word_store
 }
 
-fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIndex) -> WordList {
+pub fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIndex) -> WordList {
     // not all words are valid on the top line, only those whose pairchars are all valid
     // starting pairchars of other words,
     // eg. there's no English word starting "ZZ" so we can immediately rule out bu-zz from the top row
@@ -48,13 +48,10 @@ fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIndex)
 pub fn populate_grid(
     width: usize,
     height: usize,
-    word_store: &WordStore,
+    top_start_words: &WordList,
     horizontal_index: &BigramIndex,
     vertical_index: &BigramIndex,
 ) -> Option<PuzzleGrid> {
-    // Identify possible start words for a given size
-    let top_start_words: WordList = generate_top_words(width, &word_store, vertical_index);
-
     let continue_running = AtomicBool::new(true);
     let puzzle_arc = Arc::new(Mutex::<Option<PuzzleGrid>>::new(None));
 
@@ -62,8 +59,7 @@ pub fn populate_grid(
         let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
 
         if continue_running.load(Ordering::Relaxed) {
-            let found_result = populate_layer(
-                &mut puzzle_grid,
+            let found_result = (&mut puzzle_grid).populate_layer(
                 &x,
                 0,
                 horizontal_index,
@@ -86,50 +82,3 @@ pub fn populate_grid(
     (*puzzle_guard).take()
 }
 
-fn populate_layer(
-    puzzle_grid: &mut PuzzleGrid,
-    word: &PairString,
-    depth: usize,
-    horizontal_index: &BigramIndex,
-    vertical_index: &BigramIndex,
-    continue_running: Option<&AtomicBool>,
-) -> bool {
-    // check whether to continue loop on the two highest levels
-    if depth <= 1
-        && continue_running.is_some()
-        && !continue_running.unwrap().load(Ordering::Relaxed)
-    {
-        return false;
-    }
-
-    puzzle_grid.add_layer(word);
-
-    if puzzle_grid.is_complete() {
-        return true;
-    };
-
-    let stems = puzzle_grid.get_stems();
-    let possibles = vertical_index.get_possibles(stems);
-    let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possibles);
-
-    if let Some(v) = candidate_words {
-        // check out the lower levels
-        let word_iterator = WordIterator::new(v);
-        for word in word_iterator {
-            if populate_layer(
-                puzzle_grid,
-                &word,
-                depth + 1,
-                horizontal_index,
-                vertical_index,
-                continue_running,
-            ) {
-                return true;
-            }
-        }
-    };
-
-    puzzle_grid.remove_layer();
-
-    false
-}

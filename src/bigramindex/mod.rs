@@ -80,11 +80,11 @@ impl BigramIndex {
     }
 
     // create a hashset containing all of the possible next characters for a given set of stems
-    pub fn get_possibles(&self, stems: Vec<&[PairChar]>) -> Vec<HashSet<PairChar>> {
+    pub fn get_possible_pairchars(&self, stems: Vec<&[PairChar]>) -> Vec<HashSet<PairChar>> {
         let mut possible_chars: Vec<HashSet<PairChar>> = Vec::new();
 
         for stem in stems {
-            let new_possibles = match BigramIndex::next_possibles(self, stem) {
+            let new_possibles = match BigramIndex::next_possible_pairchars(self, stem) {
                 Some(v) => v,
                 None => HashSet::new(),
             };
@@ -96,7 +96,7 @@ impl BigramIndex {
 
     // recursively descend the tree structure
     // returning Some<HashSet> of keys if we can travel down the tree, None if we run out of tree
-    fn next_possibles(node: &BigramIndex, stem: &[PairChar]) -> Option<HashSet<PairChar>> {
+    fn next_possible_pairchars(node: &BigramIndex, stem: &[PairChar]) -> Option<HashSet<PairChar>> {
         // check to see that we haven't descended too far
         if node.depth >= stem.len() {
             panic!(
@@ -111,7 +111,7 @@ impl BigramIndex {
 
         if node.index.get(&key_char).is_none() {
             // we've hit the end of the indexchain before we've run out of word
-            // meaning there are no subsequent next_possibles
+            // meaning there are no subsequent next_possible_pairchars
             return None;
         }
 
@@ -128,7 +128,7 @@ impl BigramIndex {
         } else {
             // we've got more stem to descend down...
             // let remaining_slice = &stem[1..];
-            BigramIndex::next_possibles(&next_index_ref, stem)
+            BigramIndex::next_possible_pairchars(&next_index_ref, stem)
         }
     }
 
