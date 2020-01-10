@@ -1,14 +1,6 @@
 use puzzler;
-// use puzzler::wordstore::{WordStore, PairString};
 use puzzler::bigramindex::BigramIndex;
 use clap::{App, Arg};
-// use puzzler::puzzlegrid::PuzzleGrid;
-
-// const SOURCE_FILE: &str = "/usr/share/dict/words";
-// const PUZZLE_WIDTH: usize = 3;
-// const PUZZLE_HEIGHT: usize = 5;
-
-use std::{thread, time};
 
 
 fn main() {
@@ -94,10 +86,5 @@ fn main() {
                 puzzle_width, puzzle_depth
             );
         }
-    }
-
-    if debug {
-        println!("Sleeping a while");
-        thread::sleep(time::Duration::from_millis(5000));
     }
 }

@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
 use super::types::{PairChar, PairString};
@@ -8,7 +7,7 @@ pub struct BigramIndex {
     index: BigramIndexInner,
     depth: usize,
 }
-type BigramIndexInner = HashMap<PairChar, Option<RefCell<BigramIndex>>>;
+type BigramIndexInner = HashMap<PairChar, Option<Box<BigramIndex>>>;
 
 impl BigramIndex {
     pub fn new(depth: usize) -> BigramIndex {
@@ -19,7 +18,7 @@ impl BigramIndex {
 
     fn add_leaf(&mut self, key: PairChar) {
         let new_leaf = BigramIndex::new(self.depth + 1);
-        self.index.insert(key, Some(RefCell::new(new_leaf)));
+        self.index.insert(key, Some(Box::new(new_leaf)));
     }
 
     pub fn print(&self, prefix: &str) {
@@ -27,7 +26,7 @@ impl BigramIndex {
             let word = format!("{}-{}", prefix, &key.decode());
             match leaf {
                 Some(l) => {
-                    l.borrow().print(&word);
+                    l.print(&word);
                 }
                 None => println!("{}", word),
             }
@@ -62,10 +61,17 @@ impl BigramIndex {
 
                 // insert the rest of the pair_slice
                 let remaining_slice = &pair_slice[1..];
+
+                // unbox the index to add to it, in order to avoid interior mutability woes
+                // TODO: Find a way to use the mutable ref from get_mut directly...
+                let mut child_node: BigramIndex = *(node.index.get_mut(&key_char).unwrap().take().unwrap());
+
                 BigramIndex::index_word(
-                    &mut node.index[&key_char].as_ref().unwrap().borrow_mut(),
+                    &mut child_node,
                     remaining_slice,
                 );
+                // reinsert the modified child
+                node.index.insert(*key_char, Some(Box::new(child_node)));
             }
         }
     }
@@ -108,7 +114,7 @@ impl BigramIndex {
             .expect("Key Not Found")
             .as_ref() {
                 None => { panic!("We've hit a none in the index at depth {}", node.depth); },
-                Some(v) => v.borrow(),
+                Some(v) => v,
             };
 
         if is_last_char {
@@ -201,7 +207,7 @@ impl BigramIndex {
             // we're at an intermediate layer, so recurse down
             // for pairchar in intersection {
             for key_char in intersection {
-                let next_index_ref = index_node.index[&key_char].as_ref().unwrap().borrow();
+                let next_index_ref = index_node.index[&key_char].as_ref().unwrap();
                 let partial_words =
                     match BigramIndex::get_reversed_candidate_words(&next_index_ref, filters, depth+1) {
                         Some(v) => v,

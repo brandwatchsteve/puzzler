@@ -12,7 +12,7 @@ use puzzlegrid::PuzzleGrid;
 use types::{PairString, WordList};
 use wordstore::WordStore;
 
-// use rayon::prelude::*;
+use rayon::prelude::*;
 use std::sync::{Arc, Mutex};
 
 pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
@@ -91,7 +91,7 @@ pub fn populate_grid(
     let puzzle_arc = Arc::new(Mutex::<Option<PuzzleGrid>>::new(None));
 
     // let mut complete = false;
-    top_start_words.iter().for_each(|x| {
+    top_start_words.par_iter().for_each(|x| {
         let mut puzzle_grid: PuzzleGrid = PuzzleGrid::new(width, height);
         let completion_ref = complete.clone();
 
