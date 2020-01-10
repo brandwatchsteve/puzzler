@@ -6,7 +6,7 @@ pub mod wordstore;
 
 use bigramindex::BigramIndex;
 use puzzlegrid::PuzzleGrid;
-use types::{PairString, WordList};
+use types::{PairString, WordList, WordIterator};
 use wordstore::WordStore;
 
 use rayon::prelude::*;
@@ -21,35 +21,6 @@ pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
     }
 
     word_store
-}
-
-// Store possible words in a WordIterator
-struct WordIterator {
-    candidates: types::WordList,
-    next: usize,
-}
-
-impl WordIterator {
-    fn new(list: types::WordList) -> WordIterator {
-        WordIterator {
-            candidates: list,
-            next: 0,
-        }
-    }
-}
-
-impl Iterator for WordIterator {
-    type Item = types::PairString;
-
-    fn next(&mut self) -> Option<types::PairString> {
-        if self.next >= self.candidates.len() {
-            None
-        } else {
-            let return_val = self.candidates[self.next].clone();
-            self.next += 1;
-            Some(return_val)
-        }
-    }
 }
 
 fn generate_top_words(width: usize, word_store: &WordStore, index: &BigramIndex) -> WordList {

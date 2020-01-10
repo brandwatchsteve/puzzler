@@ -56,7 +56,7 @@ impl PairChar {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
 pub struct PairString {
     pub pair_string: Vec<PairChar>,
 }
@@ -122,6 +122,10 @@ impl PairString {
         self.pair_string.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.pair_string.is_empty()
+    }
+
     pub fn slice(&self) -> &[PairChar] {
         &self.pair_string[..]
     }
@@ -159,3 +163,33 @@ impl Index<usize> for PairString {
 }
 
 pub type WordList = Vec<PairString>;
+
+// Store possible words in a WordIterator
+pub struct WordIterator {
+    candidates: WordList,
+    next: usize,
+}
+
+impl WordIterator {
+    pub fn new(list: WordList) -> WordIterator {
+        WordIterator {
+            candidates: list,
+            next: 0,
+        }
+    }
+}
+
+impl Iterator for WordIterator {
+    type Item = PairString;
+
+    fn next(&mut self) -> Option<PairString> {
+        if self.next >= self.candidates.len() {
+            None
+        } else {
+            let return_val = self.candidates[self.next].clone();
+            self.next += 1;
+            Some(return_val)
+        }
+    }
+}
+
