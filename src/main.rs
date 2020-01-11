@@ -1,6 +1,6 @@
 use clap::{App, Arg};
 use puzzler;
-use puzzler::bigramindex::BigramIndex;
+use puzzler::bigramindex::BigramIndexTree;
 
 fn main() {
     // parse commandline
@@ -55,7 +55,7 @@ fn main() {
 
     // generate two indices
     println!("Building Indices");
-    let horizontal_index: BigramIndex = BigramIndex::build(puzzle_width, &word_store, max_spaces);
+    let horizontal_index: BigramIndexTree = BigramIndexTree::build(puzzle_width, &word_store, max_spaces);
     if debug {
         horizontal_index.print("");
     }
@@ -63,9 +63,9 @@ fn main() {
     // only generate a real vertical index if the grid is not square
     let vertical_index = if puzzle_width == puzzle_depth {
         // allocate an empty instance just to simplify code flow
-        BigramIndex::new(0)
+        BigramIndexTree::new(0)
     } else {
-        BigramIndex::build(puzzle_depth, &word_store, max_spaces)
+        BigramIndexTree::build(puzzle_depth, &word_store, max_spaces)
     };
     let vertical_index_ref = if puzzle_width == puzzle_depth {
         &horizontal_index

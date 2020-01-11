@@ -3,21 +3,21 @@ use std::collections::{HashMap, HashSet};
 use super::types::{PairChar, PairString};
 use super::wordstore::WordStore;
 
-pub struct BigramIndex {
-    index: BigramIndexInner,
+pub struct BigramIndexTree {
+    index: BigramIndexTreeInner,
     depth: usize,
 }
-type BigramIndexInner = HashMap<PairChar, Option<Box<BigramIndex>>>;
+type BigramIndexTreeInner = HashMap<PairChar, Option<Box<BigramIndexTree>>>;
 
-impl BigramIndex {
-    pub fn new(depth: usize) -> BigramIndex {
-        let index: BigramIndexInner = HashMap::new();
+impl BigramIndexTree {
+    pub fn new(depth: usize) -> BigramIndexTree {
+        let index: BigramIndexTreeInner = HashMap::new();
 
-        BigramIndex { index, depth }
+        BigramIndexTree { index, depth }
     }
 
     fn add_leaf(&mut self, key: PairChar) {
-        let new_leaf = BigramIndex::new(self.depth + 1);
+        let new_leaf = BigramIndexTree::new(self.depth + 1);
         self.index.insert(key, Some(Box::new(new_leaf)));
     }
 
@@ -34,11 +34,11 @@ impl BigramIndex {
     }
 
     // populate the index based on a series of pairwords
-    pub fn build(size: usize, word_store: &WordStore, max_spaces: usize) -> BigramIndex {
-        let mut root = BigramIndex::new(0);
+    pub fn build(size: usize, word_store: &WordStore, max_spaces: usize) -> BigramIndexTree {
+        let mut root = BigramIndexTree::new(0);
 
         for word in word_store.permuted_words_by_length(size, max_spaces) {
-            BigramIndex::index_word(&mut root, word.slice());
+            BigramIndexTree::index_word(&mut root, word.slice());
         }
 
         // return the populated index
@@ -46,7 +46,7 @@ impl BigramIndex {
     }
 
     // recursive function to create the index tree, as used by build
-    fn index_word(node: &mut BigramIndex, pair_slice: &[PairChar]) {
+    fn index_word(node: &mut BigramIndexTree, pair_slice: &[PairChar]) {
         let key_char = &pair_slice[0];
 
         match pair_slice.len() {
@@ -64,10 +64,10 @@ impl BigramIndex {
 
                 // unbox the index to add to it, in order to avoid interior mutability woes
                 // TODO: Find a way to use the mutable ref from get_mut directly...
-                let mut child_node: BigramIndex =
+                let mut child_node: BigramIndexTree =
                     *(node.index.get_mut(&key_char).unwrap().take().unwrap());
 
-                BigramIndex::index_word(&mut child_node, remaining_slice);
+                BigramIndexTree::index_word(&mut child_node, remaining_slice);
 
                 // compact the index
                 // TODO: Check that this is actually worth doing
@@ -85,7 +85,7 @@ impl BigramIndex {
 
         for stem in stems {
             let exclusions = exclusion_words.clone();
-            let new_possibles = match BigramIndex::next_possible_pairchars(self, stem, exclusions) {
+            let new_possibles = match BigramIndexTree::next_possible_pairchars(self, stem, exclusions) {
                 Some(v) => v,
                 None => HashSet::new(),
             };
@@ -97,7 +97,7 @@ impl BigramIndex {
 
     // recursively descend the tree structure
     // returning Some<HashSet> of keys if we can travel down the tree, None if we run out of tree
-    fn next_possible_pairchars(node: &BigramIndex, stem: &[PairChar], exclusions: Vec<Vec<PairChar>>) -> Option<HashSet<PairChar>> {
+    fn next_possible_pairchars(node: &BigramIndexTree, stem: &[PairChar], exclusions: Vec<Vec<PairChar>>) -> Option<HashSet<PairChar>> {
         // check to see that we haven't descended too far
         if node.depth >= stem.len() {
             panic!(
@@ -130,7 +130,7 @@ impl BigramIndex {
             Some(next_index_ref.get_keys_as_hashset_with_exclusions(new_exclusions))
         } else {
             // we've got more stem to descend down...
-            BigramIndex::next_possible_pairchars(&next_index_ref, stem, new_exclusions)
+            BigramIndexTree::next_possible_pairchars(&next_index_ref, stem, new_exclusions)
         }
     }
 
@@ -156,10 +156,10 @@ impl BigramIndex {
     }
 
     pub fn get_candidate_words(
-        root_index_node: &BigramIndex,
+        root_index_node: &BigramIndexTree,
         filters: &[HashSet<PairChar>],
     ) -> Option<Vec<PairString>> {
-        // extract the possible words derived from a BigramIndex and a set of filters for each
+        // extract the possible words derived from a BigramIndexTree and a set of filters for each
         // depth
 
         // first make sure that all of our filters can match something, immediately return None
@@ -172,7 +172,7 @@ impl BigramIndex {
 
         // descend the index tree with the set filters to find possible matches
         let reverse_words =
-            match BigramIndex::get_reversed_candidate_words(root_index_node, filters, 0) {
+            match BigramIndexTree::get_reversed_candidate_words(root_index_node, filters, 0) {
                 Some(v) => v,
                 None => {
                     return None;
@@ -190,7 +190,7 @@ impl BigramIndex {
     }
 
     fn get_reversed_candidate_words(
-        index_node: &BigramIndex,
+        index_node: &BigramIndexTree,
         filters: &[HashSet<PairChar>],
         depth: usize,
     ) -> Option<Vec<PairString>> {
@@ -206,7 +206,7 @@ impl BigramIndex {
 
         let mut reversed_words: Vec<PairString> = Vec::new();
         let intersection =
-            BigramIndex::pairchar_intersection(index_node, &filters[index_node.depth]);
+            BigramIndexTree::pairchar_intersection(index_node, &filters[index_node.depth]);
 
         if intersection.is_empty() {
             // no available matches at this depth, meaning we've not got any matches for this
@@ -228,7 +228,7 @@ impl BigramIndex {
             // for pairchar in intersection {
             for key_char in intersection {
                 let next_index_ref = index_node.index[&key_char].as_ref().unwrap();
-                let partial_words = match BigramIndex::get_reversed_candidate_words(
+                let partial_words = match BigramIndexTree::get_reversed_candidate_words(
                     &next_index_ref,
                     filters,
                     depth + 1,
@@ -255,7 +255,7 @@ impl BigramIndex {
     }
 
     fn pairchar_intersection(
-        index_node: &BigramIndex,
+        index_node: &BigramIndexTree,
         filter_set: &HashSet<PairChar>,
     ) -> Vec<PairChar> {
         // return a vec of PairChars which match both the index and the filter_set

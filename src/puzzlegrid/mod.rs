@@ -1,5 +1,5 @@
 use super::types::{PairChar, PairString, WordIterator};
-use super::bigramindex::{BigramIndex};
+use super::bigramindex::{BigramIndexTree};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Clone, Default, Debug)]
@@ -95,8 +95,8 @@ impl PuzzleGrid {
         &mut self,
         word: &PairString,
         depth: usize,
-        horizontal_index: &BigramIndex,
-        vertical_index: &BigramIndex,
+        horizontal_index: &BigramIndexTree,
+        vertical_index: &BigramIndexTree,
         continue_running: Option<&AtomicBool>,
     ) -> bool {
         // check whether to continue loop (only bother for the two highest levels)
@@ -118,7 +118,7 @@ impl PuzzleGrid {
         let current_rows = self.get_rows();
 
         let possible_pairchars = vertical_index.get_possible_pairchars(column_stems, current_rows);
-        let candidate_words = BigramIndex::get_candidate_words(horizontal_index, &possible_pairchars);
+        let candidate_words = BigramIndexTree::get_candidate_words(horizontal_index, &possible_pairchars);
 
         // recurse down if we have candidate words to check
         if let Some(v) = candidate_words {

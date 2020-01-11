@@ -4,7 +4,7 @@ pub mod puzzlegrid;
 pub mod types;
 pub mod wordstore;
 
-use bigramindex::BigramIndex;
+use bigramindex::BigramIndexTree;
 use puzzlegrid::PuzzleGrid;
 use types::WordList;
 use wordstore::WordStore;
@@ -23,7 +23,7 @@ pub fn generate_wordstore(source_file: &str) -> wordstore::WordStore {
     word_store
 }
 
-pub fn generate_top_words(width: usize, word_store: &WordStore, max_spaces: usize, index: &BigramIndex) -> WordList {
+pub fn generate_top_words(width: usize, word_store: &WordStore, max_spaces: usize, index: &BigramIndexTree) -> WordList {
     // not all words are valid on the top line, only those whose pairchars are all valid
     // starting pairchars of other words,
     // eg. there's no English word starting "ZZ" so we can immediately rule out bu-zz from the top row
@@ -49,8 +49,8 @@ pub fn populate_grid(
     width: usize,
     height: usize,
     top_start_words: &WordList,
-    horizontal_index: &BigramIndex,
-    vertical_index: &BigramIndex,
+    horizontal_index: &BigramIndexTree,
+    vertical_index: &BigramIndexTree,
 ) -> Option<PuzzleGrid> {
     let continue_running = AtomicBool::new(true);
     let puzzle_arc = Arc::new(Mutex::<Option<PuzzleGrid>>::new(None));
