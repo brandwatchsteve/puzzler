@@ -2,10 +2,8 @@
 
 ## Overview
 
-This is my entry for the Xmas 2019 puzzler - it's working parallel rust-based implementation but has a few caveats still:
-
-  - it doesn't yet prevent repeated rows and columns (though it does stop rows turning up as columns)
-  - max size I've been able to generate with it is 7x8
+This is my entry for the Xmas 2019 puzzler - it's working parallel rust-based implementation but I've only been able to
+run it up to 7x8 (64 mins runtine).
 
 ## Running
 
@@ -39,12 +37,13 @@ take under 10s and 7x7 grids take under 150s.
 ## Approach
 
 The program runs in four stages:
+
   - extract the words from the specified dictionary (/usr/share/dict/words by default)
   - generate the BigramTreeIndex'es for the horizontal and possibly vertical processing
   - generate a list of valid words for the first row of the grid
   - solve the grid row-by-row (top-down) until either a solution is found or all possible words have been exhausted
 
-In more detail, the solving proceeds as:
+The last step (the row-by-row solving) proceeds as:
 
   - using the existing grid columns and the vertical index,  establish the potential next characters for each column of the grid
   - using the array of possible characters and the horizontal index, establish possible words for the next layer of the grid
@@ -56,7 +55,7 @@ Some(child-tree) or None if it's the last node in the tree. The words in the tre
 branches of the tree should have equal length.
 
 Blank characters are explicitly encoded into the indexes, the start-words and the grid. This means the indices can become very large
-(to 4GB when trying to solve an 8x9 grid). There are command line options to test with fewer or no blank characters.
+(to 2.5GB when trying to solve an 8x9 grid). There are command line options to test with fewer or no blank characters.
 
 Short cuts used in the program are:
 
@@ -68,14 +67,11 @@ I've not removed the words with unique character pairs, and I've not set it up t
 
 ## Missing Stuff and To-Dos
 
-Missing features:
-
-  - checking for duplicate rows and columns
+AFAICT this is feature complete now.
 
 The main things yet to do here are:
 
-  - add more tests
-  - implement checks to prevent repeated rows and repeated columns
+  - add some tests...
   - speed up the code by doing fewer clones and copies
   - make the whole code more "rustic" (not using traits enough, using Result type, using iterators rather than for loops)
 

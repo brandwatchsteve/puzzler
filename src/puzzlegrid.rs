@@ -1,4 +1,5 @@
 use super::types::{PairChar, PairString, WordIterator};
+use std::collections::HashSet;
 use super::bigramindex::{BigramIndexTree};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -81,6 +82,40 @@ impl PuzzleGrid {
         return_val
     }
 
+    pub fn has_duplicates(&self) -> bool {
+        let mut match_set: HashSet<Vec<PairChar>> = HashSet::new();
+
+        for column in self.get_columns() {
+            let compact_word = PuzzleGrid::clone_without_spacers(column);
+            if match_set.contains(&compact_word) {
+                return true;
+            } else {
+                match_set.insert(compact_word);
+            }
+        }
+
+        for row in self.get_rows() {
+            let compact_word = PuzzleGrid::clone_without_spacers(&row);
+            if match_set.contains(&compact_word) {
+                return true;
+            } else {
+                match_set.insert(compact_word);
+            }
+        }
+
+        false
+    }
+
+    fn clone_without_spacers(pairchar_slice: &[PairChar]) -> Vec<PairChar> {
+        let mut pair_vec: Vec<PairChar> = Vec::new();
+        for pairchar in pairchar_slice {
+            if !pairchar.is_spacer() {
+                pair_vec.push(pairchar.clone());
+            }
+        }
+        pair_vec
+    }
+
     pub fn print(&self) {
         for y in 0..(self.depth) {
             for x in 0..(self.width) {
@@ -110,7 +145,13 @@ impl PuzzleGrid {
         self.add_layer(word);
 
         if self.is_complete() {
-            // this true should propagate up through the call stack, and complete the run
+            // if we've found a duplicate discard this solution, continue checking possibles
+            if self.has_duplicates() {
+                self.remove_layer();
+                return false;
+            }
+
+            // else this true should propagate up through the call stack, and complete the run
             return true;
         };
 
@@ -141,3 +182,4 @@ impl PuzzleGrid {
         false
     }
 }
+
