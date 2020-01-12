@@ -40,8 +40,8 @@ impl WordStore {
         &self.word_store[pattern_size - 1]
     }
 
-    pub fn permuted_words_by_length(&self, pattern_size: usize, max_spaces: usize) -> WordList {
-        if max_spaces == 0 {
+    pub fn permuted_words_by_length(&self, pattern_size: usize, max_blanks: usize) -> WordList {
+        if max_blanks == 0 {
             // no padding, so just return the raw words
             return self.word_store[pattern_size - 1].clone();
         }
@@ -53,14 +53,14 @@ impl WordStore {
             1 + pattern_size / 2
         };
 
-        if pattern_size - min_bound > max_spaces {
-            min_bound = pattern_size - max_spaces;
+        if pattern_size - min_bound > max_blanks {
+            min_bound = pattern_size - max_blanks;
         }
 
         for word_size in min_bound..pattern_size {
-            let spaces = pattern_size - word_size;
+            let blanks = pattern_size - word_size;
             for word in self.word_store[word_size - 1].iter().cloned() {
-                for permutation in word.permute(spaces) {
+                for permutation in word.permute(blanks) {
                     return_list.push(permutation);
                 }
             }

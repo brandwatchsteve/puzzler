@@ -3,7 +3,7 @@
 ## Overview
 
 This is my entry for the Xmas 2019 puzzler - it's working parallel rust-based implementation but I've only been able to
-run it up to 7x8 (64 mins runtine).
+run it up to 7x8 (taking between 1 and 2.5 hours on my laptop).
 
 ## Running
 
@@ -39,7 +39,7 @@ take under 10s and 7x7 grids take under 150s.
 The program runs in four stages:
 
   - extract the words from the specified dictionary (/usr/share/dict/words by default)
-  - generate the BigramTreeIndex'es for the horizontal and possibly vertical processing
+  - generate the BigramIndexTrees for the horizontal and if different vertical axes
   - generate a list of valid words for the first row of the grid
   - solve the grid row-by-row (top-down) until either a solution is found or all possible words have been exhausted
 
@@ -71,9 +71,10 @@ AFAICT this is feature complete now.
 
 The main things yet to do here are:
 
-  - add some tests...
-  - speed up the code by doing fewer clones and copies
-  - make the whole code more "rustic" (not using traits enough, using Result type, using iterators rather than for loops)
+  - add some unit tests...
+  - filter for valid start character on first non-blank on rows and columns
+  - investigate doing the blanks in the descent of the tree, rather than storing each at index time
+  - make the whole code more "rustic" (iterators instead of reslicing vecs, traits instead of containers, using Result type, using iterators rather than for loops)
 
 ## Build Instructions
 

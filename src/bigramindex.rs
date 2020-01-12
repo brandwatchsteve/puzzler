@@ -34,10 +34,10 @@ impl BigramIndexTree {
     }
 
     // populate the index based on a series of pairwords
-    pub fn build(size: usize, word_store: &WordStore, max_spaces: usize) -> BigramIndexTree {
+    pub fn build(size: usize, word_store: &WordStore, max_blanks: usize) -> BigramIndexTree {
         let mut root = BigramIndexTree::new(0);
 
-        for word in word_store.permuted_words_by_length(size, max_spaces) {
+        for word in word_store.permuted_words_by_length(size, max_blanks) {
             BigramIndexTree::index_word(&mut root, word.slice());
         }
 

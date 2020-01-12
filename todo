@@ -1,5 +1,2 @@
-* tests
-* readme.md
-* ignore duplicate verticals
 * replace contained primitives with traits
 * permutes in descent (vs. permutes in index)

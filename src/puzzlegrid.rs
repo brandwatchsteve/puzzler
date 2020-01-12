@@ -63,7 +63,7 @@ impl PuzzleGrid {
             // &column.iter().enumerate().for_each(|x| rows[x.0].push(*x.1));
             for i in 0..self.next_layer {
                 let pairchar = column[i];
-                if !pairchar.is_spacer() {
+                if !pairchar.is_blank() {
                     rows[i].push(pairchar);
                 }
             }
@@ -86,7 +86,7 @@ impl PuzzleGrid {
         let mut match_set: HashSet<Vec<PairChar>> = HashSet::new();
 
         for column in self.get_columns() {
-            let compact_word = PuzzleGrid::clone_without_spacers(column);
+            let compact_word = PuzzleGrid::clone_without_blanks(column);
             if match_set.contains(&compact_word) {
                 return true;
             } else {
@@ -95,7 +95,7 @@ impl PuzzleGrid {
         }
 
         for row in self.get_rows() {
-            let compact_word = PuzzleGrid::clone_without_spacers(&row);
+            let compact_word = PuzzleGrid::clone_without_blanks(&row);
             if match_set.contains(&compact_word) {
                 return true;
             } else {
@@ -106,10 +106,10 @@ impl PuzzleGrid {
         false
     }
 
-    fn clone_without_spacers(pairchar_slice: &[PairChar]) -> Vec<PairChar> {
+    fn clone_without_blanks(pairchar_slice: &[PairChar]) -> Vec<PairChar> {
         let mut pair_vec: Vec<PairChar> = Vec::new();
         for pairchar in pairchar_slice {
-            if !pairchar.is_spacer() {
+            if !pairchar.is_blank() {
                 pair_vec.push(pairchar.clone());
             }
         }

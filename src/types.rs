@@ -7,7 +7,7 @@ pub struct PairChar {
     pair_char: u16,
 }
 
-const SPACE_VALUE: u16 = 27 * 27;
+const BLANK_VALUE: u16 = 27 * 27;
 
 impl PairChar {
     pub fn new() -> PairChar {
@@ -16,8 +16,8 @@ impl PairChar {
         PairChar { pair_char }
     }
 
-    pub fn is_spacer(&self) -> bool {
-        self.pair_char == SPACE_VALUE
+    pub fn is_blank(&self) -> bool {
+        self.pair_char == BLANK_VALUE
     }
 
     fn is_lowercase_ascii(test_char: u8) -> bool {
@@ -35,7 +35,7 @@ impl PairChar {
     // handle non-ascii characters
     pub fn encode(char1: u8, char2: u8) -> PairChar {
         if char1 == b'_' && char2 == b'_' {
-            PairChar { pair_char: SPACE_VALUE }
+            PairChar { pair_char: BLANK_VALUE }
         } else {
             let val1: u16 = PairChar::single_char_convert(char1);
             let val2: u16 = PairChar::single_char_convert(char2);
