@@ -156,9 +156,8 @@ impl PuzzleGrid {
         };
 
         let column_stems = self.get_columns();
-        let current_rows = self.get_rows();
 
-        let possible_pairchars = vertical_index.get_possible_pairchars(column_stems, current_rows);
+        let possible_pairchars = vertical_index.get_possible_pairchars(column_stems);
         let candidate_words = BigramIndexTree::get_candidate_words(horizontal_index, &possible_pairchars);
 
         // recurse down if we have candidate words to check
